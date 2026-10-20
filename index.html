@@ -177,6 +177,7 @@ main{min-width:0;padding-inline:clamp(16px,4vw,40px);padding-block:26px 60px;dis
 .f-docs-lista{margin:0;padding:0;list-style:none;display:grid;gap:4px}
 .f-docs-lista li{font-size:13.5px;display:flex;gap:8px;align-items:center;min-width:0}
 .f-docs-lista a{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fN-link{justify-self:start;background:none;border:0;padding:0;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer}
 .panel h2{margin:0;font:700 16px var(--f-display);color:var(--accent)}
 
 /* Formularios */
@@ -579,11 +580,13 @@ body.con-intro #fab,body.con-intro #fp{display:none}
   <form class="modal" id="fN" role="dialog" aria-modal="true" aria-labelledby="fN-h">
     <h2 id="fN-h">Conectar con Google</h2>
     <p style="margin:0;color:var(--muted);font-size:14px">Con esto tus pendientes se guardan en tu Hoja de Google y los ves igual en la computadora y en el celular. Se pide una sola vez en cada equipo.</p>
-    <label for="fN-url">Dirección del servidor<input id="fN-url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
-    <label for="fN-clave">Clave<input id="fN-clave" type="password" required placeholder="La clave que pusiste en el servidor" autocomplete="current-password"></label>
+    <label for="fN-url" id="fN-url-l" hidden>Dirección del servidor<input id="fN-url" type="url" required placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off"></label>
+    <label for="fN-clave" id="fN-clave-l">Clave<input id="fN-clave" type="password" required placeholder="Escribe la clave de la agenda" autocomplete="current-password"></label>
+    <button type="button" class="fN-link" id="fN-cambiar">Cambiar la dirección del servidor</button>
     <p class="status" id="fN-st" style="margin:0;font-size:13px;min-height:1em"></p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn primary" type="submit">Conectar</button>
+      <button class="btn primary" type="submit" id="fN-ok">Conectar</button>
+      <button class="btn primary" type="button" id="fN-liga" hidden>Copiar liga de acceso</button>
       <button class="btn ghost" type="button" id="fN-off" hidden>Desconectar este equipo</button>
       <button class="btn ghost" type="button" id="fN-cancel">Cerrar</button>
     </div>
@@ -640,6 +643,7 @@ let tasks=[],dirs=[],filDir="",editDir=null,editTask=null,calVista="semana",calR
 /* ---------- Guardado en este navegador ---------- */
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 /* ---------- Guardado: en la nube (Google) o en este equipo ---------- */
+const SERVIDOR="https://script.google.com/macros/s/AKfycbwVmjSuITlQSpPshMsk49UAuRrMRv-DDl6PDYlknpccAT4ahnbQ7i5-a0oYqlQKLpZQow/exec"; // dirección fija del servidor de Google
 const NUBE_KEY="agendaCelia.nube",CACHE_KEY="agendaCelia.nube.copia";
 function nube(){try{const n=JSON.parse(localStorage.getItem(NUBE_KEY)||"null");return n&&n.url&&n.clave?n:null}catch(e){return null}}
 function guardarCopia(){if(MODO!=="nube")return;try{localStorage.setItem(CACHE_KEY,JSON.stringify({tasks,dirs,synced}))}catch(e){}}
@@ -695,7 +699,16 @@ function persistir(){
   if(MODO==="nube"){guardarCopia();renderTodo();enviarCambios();return}
   try{localStorage.setItem(KEY,JSON.stringify({tasks,dirs}));guardadoOK=true}catch(e){guardadoOK=false}renderTodo()}
 let relojNube=null;
+function accesoPorLiga(){ // https://…/-agenda-celia/#acceso=CLAVE conecta el equipo sin escribir nada
+  const m=location.hash.match(/(?:^#|&)acceso=([^&]+)/);if(!m)return;
+  let clave="";try{clave=decodeURIComponent(m[1]).trim()}catch(e){}
+  try{history.replaceState(null,"",location.pathname+location.search)}catch(e){location.hash=""}
+  if(!clave||nube())return;
+  try{localStorage.setItem(NUBE_KEY,JSON.stringify({url:SERVIDOR,clave}))}catch(e){}
+}
+function ligaAcceso(){const n=nube();return n?location.origin+location.pathname+"#acceso="+encodeURIComponent(n.clave):""}
 async function iniciarDatos(){
+  accesoPorLiga();
   const g=window.google&&google.script&&google.script.run;
   if(!g&&!nube()){MODO="local";cargar();persistir();estado("local","Solo en este equipo · toca aquí para conectar");return}
   MODO="nube";let primera=false,c=null;
@@ -750,7 +763,15 @@ async function remoto(url,clave,fn,arg){
   return alterna(url,clave,fn,arg)}
 
 /* ---------- Ventana de la nube ---------- */
-function abrirNube(){const n=nube();$("#fN-url").value=n?n.url:"";$("#fN-clave").value=n?n.clave:"";$("#fN-off").hidden=!n;$("#fN-st").textContent=n?"Este equipo ya está conectado.":"";$("#ovN").hidden=false;setTimeout(()=>$("#fN-url").focus(),30)}
+function abrirNube(){let n=nube();const malaClave=!!n&&/^Clave incorrecta/.test($("#sync-t").textContent);if(malaClave)n=null;
+  $("#fN-url").value=n?n.url:SERVIDOR;$("#fN-clave").value="";
+  $("#fN-url-l").hidden=true;$("#fN-clave-l").hidden=!!n;$("#fN-cambiar").hidden=!!n;$("#fN-ok").hidden=!!n;$("#fN-liga").hidden=!n;$("#fN-off").hidden=!n;
+  $("#fN-st").textContent=n?"Este equipo ya está conectado y guardando en Google. No tienes que hacer nada; puedes cerrar esta ventana.":malaClave?"La clave guardada en este equipo no es correcta. Escríbela de nuevo.":"Escribe la clave una sola vez. También puedes abrir la liga de acceso que te enviaron.";
+  $("#ovN").hidden=false;if(!n)setTimeout(()=>$("#fN-clave").focus(),30)}
+$("#fN-cambiar").onclick=()=>{$("#fN-url-l").hidden=false;$("#fN-cambiar").hidden=true;$("#fN-url").focus()};
+$("#fN-liga").onclick=async()=>{const l=ligaAcceso(),st=$("#fN-st");if(!l)return;
+  try{await navigator.clipboard.writeText(l);st.textContent="Liga copiada. Envíala solo a Celia y ábrela una vez en su otro equipo: quien tenga esta liga puede entrar a la agenda."}
+  catch(e){st.textContent="Copia esta liga y ábrela una vez en el otro equipo (no la compartas con nadie más): "+l}};
 document.addEventListener("click",e=>{if(e.target.closest("[data-nube]"))abrirNube()});
 $("#sync").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();abrirNube()}});
 $("#fN-cancel").onclick=()=>{$("#ovN").hidden=true};
