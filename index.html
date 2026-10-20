@@ -172,6 +172,11 @@ main{min-width:0;padding-inline:clamp(16px,4vw,40px);padding-block:26px 60px;dis
 .doc-x{flex:none;background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:12.5px}
 .doc-x:hover{color:#b3261e;border-color:#b3261e}
 #doc-q{width:100%}
+.f-docs{display:grid;gap:6px}
+.f-docs-st{margin:0;font-size:13px;color:var(--muted)}
+.f-docs-lista{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.f-docs-lista li{font-size:13.5px;display:flex;gap:8px;align-items:center;min-width:0}
+.f-docs-lista a{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .panel h2{margin:0;font:700 16px var(--f-display);color:var(--accent)}
 
 /* Formularios */
@@ -194,6 +199,29 @@ textarea{resize:vertical;min-height:60px}
 
 /* Ventana de pendiente */
 body:has(.overlay:not([hidden])) #fab,body:has(.overlay:not([hidden])) #fp{display:none}
+/* ---------- Presentación al abrir (DAVKARIX) ---------- */
+.intro{position:fixed;inset:0;z-index:200;background:#04170C;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;transition:opacity .7s ease}
+.intro.fuera{opacity:0;pointer-events:none}
+.intro-fondo{position:absolute;inset:-40px;background:#04170C url(intro.jpg) center/cover no-repeat;filter:blur(28px) brightness(.55);transform:scale(1.1)}
+.intro video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@media (min-aspect-ratio:4/5){.intro video{object-fit:contain}}
+.intro-velo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,23,12,.15) 0%,rgba(4,23,12,0) 35%,rgba(4,23,12,.55) 65%,rgba(4,23,12,.92) 100%)}
+.intro-txt{position:relative;text-align:center;color:#fff;padding:0 24px calc(120px + env(safe-area-inset-bottom,0px));max-width:900px}
+.intro-k{margin:0;font:800 clamp(34px,7vw,86px)/1 var(--f-display,Montserrat,Arial,sans-serif);letter-spacing:.32em;padding-left:.32em;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.45)}
+.intro-k span{display:inline-block;opacity:0;transform:translateY(18px);animation:introLetra .6s cubic-bezier(.2,.8,.2,1) forwards}
+.intro-k span.k2{color:#C9D300}
+.intro-pre{margin:14px 0 6px;font:600 clamp(14px,2vw,18px)/1.2 var(--f-body,Arial,sans-serif);letter-spacing:.35em;text-transform:uppercase;color:#D7EBDD;opacity:0;animation:introSube .8s ease 1.3s forwards}
+.intro-t{margin:0;font:800 clamp(30px,5.4vw,60px)/1.05 var(--f-display,Montserrat,Arial,sans-serif);color:#fff;opacity:0;animation:introSube .9s ease 1.7s forwards;text-shadow:0 4px 24px rgba(0,0,0,.4)}
+.intro-s{margin:12px auto 0;font:500 clamp(12.5px,1.6vw,15px)/1.4 var(--f-body,Arial,sans-serif);color:#C9DCCF;opacity:0;animation:introSube .9s ease 2.2s forwards;max-width:560px}
+.intro-btns{position:absolute;left:0;right:0;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;opacity:0;animation:introSube .6s ease .8s forwards}
+.intro-btns button{border:1px solid rgba(255,255,255,.45);background:rgba(4,23,12,.45);backdrop-filter:blur(6px);color:#fff;border-radius:999px;padding:10px 20px;font:700 14px var(--f-body,Arial,sans-serif)}
+.intro-btns #intro-entrar{background:#C9D300;color:#0B3A1D;border-color:#C9D300}
+.intro-bar{position:absolute;left:0;top:0;height:3px;width:0;background:#C9D300}
+@keyframes introLetra{to{opacity:1;transform:none}}
+@keyframes introSube{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.intro-k span,.intro-pre,.intro-t,.intro-s,.intro-btns{animation-duration:.01s!important;animation-delay:0s!important}}
+body.con-intro{overflow:hidden}
+body.con-intro #fab,body.con-intro #fp{display:none}
 .overlay{position:fixed;inset:0;background:rgba(4,30,14,.55);display:grid;place-items:center;padding:16px;z-index:20}
 .modal{background:var(--surface);color:var(--ink);border-radius:16px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:20px;display:grid;gap:12px;border-top:6px solid var(--brand-2)}
 .modal h2{margin:0;font:800 20px var(--f-display);color:var(--accent)}
@@ -330,6 +358,42 @@ body:has(.overlay:not([hidden])) #fab,body:has(.overlay:not([hidden])) #fp{displ
 </style>
 </head>
 <body>
+<div class="intro" id="intro" role="dialog" aria-label="Presentación: DAVKARIX presenta Agenda de Celia" hidden>
+  <div class="intro-fondo"></div>
+  <video id="intro-v" muted playsinline preload="auto" poster="intro.jpg"></video>
+  <div class="intro-velo"></div>
+  <div class="intro-bar" id="intro-bar"></div>
+  <div class="intro-txt">
+    <p class="intro-k" aria-label="DAVKARIX"><span>D</span><span>A</span><span>V</span><span class="k2">K</span><span>A</span><span>R</span><span>I</span><span>X</span></p>
+    <p class="intro-pre">presenta</p>
+    <h1 class="intro-t">Agenda de Celia</h1>
+    <p class="intro-s">INECC · Coordinación General de Adaptación al Cambio Climático y Ecología</p>
+  </div>
+  <div class="intro-btns"><button type="button" id="intro-son">Activar sonido</button><button type="button" id="intro-entrar">Entrar ›</button></div>
+</div>
+<script>
+/* Presentación al abrir: una vez por sesión; se puede apagar en la configuración del asistente */
+(function(){
+  var el=document.getElementById("intro");if(!el)return;
+  var apagada=false,vista=false;try{apagada=localStorage.getItem("agendaCelia.intro")==="no";vista=sessionStorage.getItem("agendaCelia.introVista")==="1"}catch(e){}
+  if(apagada||vista){el.remove();return}
+  el.hidden=false;document.body.classList.add("con-intro");
+  var v=document.getElementById("intro-v"),bar=document.getElementById("intro-bar"),son=document.getElementById("intro-son"),cerrada=false,t0=Date.now(),DUR=13200;
+  var spans=el.querySelectorAll(".intro-k span");for(var i=0;i<spans.length;i++)spans[i].style.animationDelay=(0.25+i*0.09)+"s";
+  function cerrar(){if(cerrada)return;cerrada=true;try{sessionStorage.setItem("agendaCelia.introVista","1")}catch(e){}
+    el.classList.add("fuera");document.body.classList.remove("con-intro");try{v.pause()}catch(e){}setTimeout(function(){el.remove()},750)}
+  function avance(){if(cerrada)return;var p=v.duration&&!v.paused?v.currentTime/v.duration:(Date.now()-t0)/DUR;bar.style.width=Math.min(100,p*100)+"%";requestAnimationFrame(avance)}
+  v.src="intro.mp4";
+  v.addEventListener("ended",cerrar);
+  v.addEventListener("error",function(){setTimeout(cerrar,3800)});
+  var pr=v.play();if(pr&&pr.catch)pr.catch(function(){setTimeout(cerrar,4200)});
+  setTimeout(cerrar,DUR+2500); /* por si el video no avanza */
+  requestAnimationFrame(avance);
+  document.getElementById("intro-entrar").onclick=cerrar;
+  son.onclick=function(){v.muted=!v.muted;if(!v.muted){v.volume=.8;v.play&&v.play()}son.textContent=v.muted?"Activar sonido":"Quitar sonido"};
+  document.addEventListener("keydown",function(e){if(!cerrada&&(e.key==="Escape"||e.key==="Enter"))cerrar()});
+})();
+</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-hoy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
   <symbol id="i-tab" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></symbol>
@@ -492,6 +556,7 @@ body:has(.overlay:not([hidden])) #fab,body:has(.overlay:not([hidden])) #fp{displ
     <div class="cfg-row">
       <label class="sw" for="cfg-hablar"><input type="checkbox" id="cfg-hablar" checked> Responder en voz alta</label>
       <label class="sw" for="cfg-manos"><input type="checkbox" id="cfg-manos"> Manos libres (“Oye agenda…”)</label>
+      <label class="sw" for="cfg-intro"><input type="checkbox" id="cfg-intro" checked> Presentación al abrir</label>
     </div>
     <button class="btn ghost small" type="button" id="cfg-probar">Probar voz</button>
     <p class="note">Para la voz más natural: en computadora usa Microsoft Edge y elige una voz que diga “Natural”; en Android, Chrome con las voces de Google.</p>
@@ -535,11 +600,17 @@ body:has(.overlay:not([hidden])) #fab,body:has(.overlay:not([hidden])) #fp{displ
       <label for="f-hora">Hora<input id="f-hora" type="time"></label>
     </div>
     <label for="f-dir">Dirección<select id="f-dir"><option value="">— Ninguna —</option></select></label>
+    <label for="f-donde" id="f-donde-l" hidden>¿Dónde? (institución o lugar)<input id="f-donde" placeholder="Ej. SEMARNAT, oficinas centrales"></label>
     <div class="grid2">
       <label for="f-con">Con quién (otra persona)<input id="f-con" placeholder="Opcional"></label>
       <label for="f-prio">Prioridad<select id="f-prio"><option value="normal">Normal (según fecha)</option><option value="alta">Urgente (rojo)</option></select></label>
     </div>
     <label for="f-notas">Notas<textarea id="f-notas" placeholder="Lugar, documentos, oficio…"></textarea></label>
+    <div class="f-docs">
+      <label for="f-docs">Documentos (opcional)<input id="f-docs" type="file" multiple></label>
+      <p class="f-docs-st" id="f-docs-st"></p>
+      <ul class="f-docs-lista" id="f-docs-lista" hidden></ul>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn primary" type="submit">Guardar</button>
       <button class="btn ghost" type="button" id="f-cancel">Cancelar</button>
@@ -703,6 +774,9 @@ $("#fN-off").onclick=()=>{
   try{localStorage.setItem(KEY,JSON.stringify({tasks,dirs}));localStorage.removeItem(NUBE_KEY);localStorage.removeItem(CACHE_KEY)}catch(x){}
   MODO="local";$("#ovN").hidden=true;estado("local","Solo en este equipo · toca aquí para conectar");renderTodo();
 };
+const TODAS="Todas las direcciones",FUERA_PRE="Fuera · ",FUERA_OPC="__fuera";
+const esFuera=d=>d==="Fuera"||String(d||"").startsWith(FUERA_PRE);
+const tocaDir=(t,nombre)=>t.direccion===nombre||t.direccion===TODAS; // un pendiente para todas aparece en cada dirección
 const jefeDe=n=>{const d=dirs.find(x=>x.nombre===n);return d?d.jefe:""};
 
 /* ---------- Fechas y semáforo ---------- */
@@ -766,7 +840,7 @@ function renderAgenda(){
   box.innerHTML=grupos.map(([h,cls,l])=>`<div class="day ${cls}"><h3>${esc(h)}</h3>${l.length?l.map(itemHTML).join(""):`<p class="empty" style="padding:10px 14px">Nada agendado para hoy.</p>`}</div>`).join("");
 }
 function renderBoard(){
-  let act=tasks.filter(t=>!t.hecho);if(filDir)act=act.filter(t=>t.direccion===filDir);act.sort(orden);
+  let act=tasks.filter(t=>!t.hecho);if(filDir)act=act.filter(t=>filDir===FUERA_OPC?esFuera(t.direccion):filDir===TODAS?t.direccion===TODAS:tocaDir(t,filDir));act.sort(orden);
   const col=(c,n,s)=>{const l=act.filter(t=>color(t)===c);return `<div class="col"><h3><span class="dot ${c}"></span>${n}<span class="c">${l.length}</span></h3><div class="note" style="margin-top:-6px">${s}</div>${l.length?l.map(cardHTML).join(""):`<p class="note">Sin pendientes.</p>`}</div>`};
   $("#board").innerHTML=col("r","Rojo","Atender ya")+col("a","Amarillo","Próximos 1 a 3 días")+col("g","Verde","Con tiempo");
 }
@@ -816,7 +890,7 @@ function renderDirs(){
       <label for="ej-${d.id}">Jefe o jefa<input id="ej-${d.id}" value="${esc(d.jefe)}"></label>
       <label for="ec-${d.id}">Cargo<input id="ec-${d.id}" value="${esc(d.cargo)}"></label>
       <div class="foot"><button class="btn primary small" type="submit">Guardar</button><button class="btn ghost small" type="button" data-cancel="1">Cancelar</button></div></form>`;
-    const act=tasks.filter(t=>!t.hecho&&t.direccion===d.nombre).sort(orden);
+    const act=tasks.filter(t=>!t.hecho&&tocaDir(t,d.nombre)).sort(orden);
     return `<div class="dir"><div class="n">${esc(d.nombre)}</div>
       <div class="j">${d.jefe?`<b>${esc(d.jefe)}</b>${d.cargo?" · "+esc(d.cargo):""}`:"<i>Sin titular registrado</i>"}</div>
       ${act.length?`<ul>${act.slice(0,4).map(t=>`<li><span class="dot ${color(t)}"></span><span>${esc(t.titulo)}</span></li>`).join("")}${act.length>4?`<li class="note">y ${act.length-4} más…</li>`:""}</ul>`:`<div class="note">Sin pendientes activos.</div>`}
@@ -826,7 +900,8 @@ function renderDone(){const l=tasks.filter(t=>t.hecho).sort(porFecha).reverse();
 function fillDirSelects(){
   const opts=dirs.map(d=>`<option value="${esc(d.nombre)}">${esc(d.nombre)}</option>`).join("");
   const a=$("#f-dir"),b=$("#fil-dir"),va=a.value,vb=b.value;
-  a.innerHTML=`<option value="">— Ninguna —</option>`+opts;a.value=va;b.innerHTML=`<option value="">Todas</option>`+opts;b.value=vb;
+  a.innerHTML=`<option value="">— Ninguna —</option><option value="${esc(TODAS)}">Todas las direcciones</option>`+opts+`<option value="${FUERA_OPC}">Fuera (otra institución o lugar)</option>`;a.value=va;
+  b.innerHTML=`<option value="">Todas</option>`+opts+`<option value="${esc(TODAS)}">Solo “Todas las direcciones”</option><option value="${FUERA_OPC}">Fuera</option>`;b.value=vb;
 }
 
 /* ---------- Navegación ---------- */
@@ -867,7 +942,9 @@ $("#fd").addEventListener("submit",e=>{e.preventDefault();const nombre=$("#d-nom
 /* ---------- Ventana nuevo / editar ---------- */
 function abrir(t){
   editTask=t||null;$("#f-h").textContent=t?"Editar pendiente":"Nuevo pendiente";
-  $("#f-titulo").value=t?.titulo||"";$("#f-fecha").value=t?.fecha||"";$("#f-hora").value=t?.hora||"";$("#f-dir").value=t?.direccion||"";
+  $("#f-titulo").value=t?.titulo||"";$("#f-fecha").value=t?.fecha||"";$("#f-hora").value=t?.hora||"";const dv=t?.direccion||"";
+  if(esFuera(dv)){$("#f-dir").value=FUERA_OPC;$("#f-donde").value=dv==="Fuera"?"":dv.slice(FUERA_PRE.length)}else{$("#f-dir").value=dv;if($("#f-dir").value!==dv)$("#f-dir").value="";$("#f-donde").value=""}
+  verDonde();prepararDocsForm(t);
   $("#f-con").value=t?.con||"";$("#f-prio").value=t?.prioridad||"normal";$("#f-notas").value=t?.notas||"";
   $("#ov").hidden=false;setTimeout(()=>$("#f-titulo").focus(),30);
 }
@@ -875,10 +952,32 @@ const cerrar=()=>{$("#ov").hidden=true;editTask=null};
 $("#btn-new").onclick=()=>abrir(null);$("#f-cancel").onclick=cerrar;
 $("#ov").addEventListener("click",e=>{if(e.target.id==="ov")cerrar()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#ov").hidden)cerrar()});
+function verDonde(){const f=$("#f-dir").value===FUERA_OPC;$("#f-donde-l").hidden=!f;if(f&&!$("#ov").hidden)setTimeout(()=>$("#f-donde").focus(),20)}
+$("#f-dir").addEventListener("change",verDonde);
+function prepararDocsForm(t){
+  const inp=$("#f-docs"),st=$("#f-docs-st"),ul=$("#f-docs-lista");inp.value="";
+  const conectada=MODO==="nube";inp.disabled=!conectada;
+  st.textContent=conectada?`Se guardan en tu Google Drive junto a este pendiente (máximo ${MAX_MB} MB cada uno).`:"Para adjuntar documentos, primero conecta con Google: toca el letrero de debajo de la fecha.";
+  const pintar=()=>{const l=t?docs.filter(d=>d.tarea===t.id):[];ul.hidden=!l.length;ul.innerHTML=l.map(d=>`<li>📎 <a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.nombre)}</a></li>`).join("")};
+  pintar();if(t&&conectada&&!docsListos)llamar("docs").then(d=>{docs=d;docsListos=true;if(editTask===t)pintar()},()=>{});
+}
+async function subirDelForm(files,tareaId,titulo){
+  const st=$("#quick-status"),ok=files.filter(f=>f.size<=MAX_MB*1048576),grandes=files.filter(f=>f.size>MAX_MB*1048576);let bien=0;
+  for(let i=0;i<ok.length;i++){st.textContent=`Subiendo documento ${ok.length>1?(i+1)+" de "+ok.length+" ":""}de “${titulo}”: ${ok[i].name}…`;
+    try{docs=await llamar("subir",{nombre:ok[i].name,tipo:ok[i].type||"application/octet-stream",datos:await leer64(ok[i]),tarea:tareaId});docsListos=true;bien++}
+    catch(x){st.textContent=`No se pudo subir ${ok[i].name}. Puedes intentarlo de nuevo desde Documentos.`;renderTodo();return}}
+  st.textContent=(bien?`${bien===1?"Documento guardado":bien+" documentos guardados"} con “${titulo}”.`:"")+(grandes.length?` No se subió ${grandes.map(f=>f.name).join(", ")}: pesa más de ${MAX_MB} MB.`:"");
+  renderTodo();
+}
 $("#f").addEventListener("submit",e=>{e.preventDefault();
-  const v={titulo:$("#f-titulo").value.trim(),fecha:$("#f-fecha").value,hora:$("#f-hora").value,direccion:$("#f-dir").value,con:$("#f-con").value.trim(),prioridad:$("#f-prio").value,notas:$("#f-notas").value.trim()};
-  if(!v.titulo)return;if(editTask)Object.assign(editTask,v);else agregar(v);cerrar();persistir()});
-function agregar(t){tasks.push({id:uid(),titulo:t.titulo,fecha:t.fecha||"",hora:t.hora||"",con:t.con||"",direccion:t.direccion||"",notas:t.notas||"",prioridad:t.prioridad==="alta"?"alta":"normal",hecho:false,creado:new Date().toISOString(),autor:yo()})}
+  const sel=$("#f-dir").value,donde=$("#f-donde").value.trim();
+  const direccion=sel===FUERA_OPC?(donde?FUERA_PRE+donde:"Fuera"):sel;
+  const v={titulo:$("#f-titulo").value.trim(),fecha:$("#f-fecha").value,hora:$("#f-hora").value,direccion,con:$("#f-con").value.trim(),prioridad:$("#f-prio").value,notas:$("#f-notas").value.trim()};
+  if(!v.titulo)return;
+  const files=MODO==="nube"?[...$("#f-docs").files]:[];
+  let t;if(editTask){Object.assign(editTask,v);t=editTask}else t=agregar(v);
+  cerrar();persistir();if(files.length)subirDelForm(files,t.id,t.titulo)});
+function agregar(t){const n={id:uid(),titulo:t.titulo,fecha:t.fecha||"",hora:t.hora||"",con:t.con||"",direccion:t.direccion||"",notas:t.notas||"",prioridad:t.prioridad==="alta"?"alta":"normal",hecho:false,creado:new Date().toISOString(),autor:yo()};tasks.push(n);return n}
 
 /* ---------- Exportar a Excel (.xlsx real, sin internet) ---------- */
 const XL=(()=>{
@@ -948,7 +1047,7 @@ function excelPendientes(){
   const r2=[[{v:"Resumen de la agenda",s:1}],[{v:gen,s:2}],[],[{v:"Semáforo",s:3},{v:"Pendientes",s:3}],
     [{v:"Rojo",s:7},{v:n.r,t:"n",s:12}],[{v:"Amarillo",s:8},{v:n.a,t:"n",s:12}],[{v:"Verde",s:9},{v:n.g,t:"n",s:12}],[{v:"Total activos",s:11},{v:act.length,t:"n",s:12}],[{v:"Hechos",s:10},{v:hec.length,t:"n",s:12}],[],
     [{v:"Dirección",s:3},{v:"Titular",s:3},{v:"Activos",s:3},{v:"En rojo",s:3}],
-    ...dirs.map(d=>{const l=act.filter(t=>t.direccion===d.nombre);return[{v:d.nombre,s:4},{v:d.jefe||"—",s:4},{v:l.length,t:"n",s:6},{v:l.filter(t=>color(t)==="r").length,t:"n",s:6}]}),
+    ...dirs.map(d=>{const l=act.filter(t=>tocaDir(t,d.nombre));return[{v:d.nombre,s:4},{v:d.jefe||"—",s:4},{v:l.length,t:"n",s:6},{v:l.filter(t=>color(t)==="r").length,t:"n",s:6}]}),
     [{v:"Sin dirección",s:4},{v:"—",s:4},{v:act.filter(t=>!t.direccion).length,t:"n",s:6},{v:act.filter(t=>!t.direccion&&color(t)==="r").length,t:"n",s:6}]];
   const s2=XL.hoja(r2,{widths:[46,26,10,10],merges:["A1:D1","A2:D2"],heights:{0:24}});
   return XL.libro([["Pendientes",s1,filtro],["Resumen",s2]]);
@@ -1023,7 +1122,7 @@ const STOP=new Set(["direccion","coordinacion","cambio","climatico","adaptacion"
 const clave=n=>sinAcento(n).split(/[^a-z]+/).filter(w=>w.length>=6&&!STOP.has(w));
 function buscarDir(texto){const tx=sinAcento(texto);let mejor=null,pts=0;
   dirs.forEach(d=>{let p=0;clave(d.nombre).forEach(w=>{if(tx.includes(w.slice(0,6)))p++});
-    if(d.jefe)sinAcento(d.jefe).split(/\s+/).filter(w=>w.length>=4).forEach(w=>{if(new RegExp("\\b"+w+"\\b").test(tx))p+=2});
+    if(d.jefe)sinAcento(d.jefe).replace(/[^a-z0-9ñ\s]/g," ").split(/\s+/).filter(w=>w.length>=4).forEach(w=>{if(new RegExp("\\b"+w+"\\b").test(tx))p+=2});
     if(tx.includes(sinAcento(d.nombre)))p+=5;if(sinAcento(d.nombre).includes("administrativ")&&/administrativ/.test(tx))p+=2;
     if(p>pts){pts=p;mejor=d}});return mejor}
 const NUM={un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,trece:13,catorce:14,quince:15,dieciseis:16,diecisiete:17,dieciocho:18,diecinueve:19,veinte:20,veintiuno:21,veintidos:22,veintitres:23,veinticuatro:24,veinticinco:25,veintiseis:26,veintisiete:27,veintiocho:28,veintinueve:29,treinta:30,treintaiuno:31,"treinta y uno":31};
@@ -1085,8 +1184,15 @@ function limpiarTitulo(texto){
   s=s.replace(/^(una|un)\s+/i,"");
   return cap(s)||cap(texto.trim());
 }
+function dirDe(texto,tx,d){
+  if(/todas las direcciones|todas las areas/.test(tx))return TODAS;
+  const m=texto.match(/\bfuera(?:\s+de\s+la\s+oficina)?\s+(?:en|a)\s+(?:la\s+|el\s+|las\s+|los\s+)?([^,.;]+?)(?=\s+(?:el|este|esta|para|a\s+las?|hoy|ma[ñn]ana|pasado|lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo|urgente|\d)\b|[,.;]|$)/i);
+  if(m&&m[1].trim())return FUERA_PRE+m[1].trim().replace(/^./,c=>c.toUpperCase());
+  if(/\bfuera\b/.test(tx)&&!d)return"Fuera";
+  return d?d.nombre:"";
+}
 function interpretar(texto){const tx=numeros(sinAcento(texto)),d=buscarDir(texto),con=leerPersona(texto);
-  return{titulo:limpiarTitulo(numerosTexto(texto)),fecha:leerFecha(tx),hora:leerHora(tx),direccion:d?d.nombre:"",con:d&&d.jefe&&sinAcento(con)===sinAcento(d.jefe)?"":con,prioridad:/urgente|importante|prioritari/.test(tx)?"alta":"normal",notas:""}}
+  return{titulo:limpiarTitulo(numerosTexto(texto)),fecha:leerFecha(tx),hora:leerHora(tx),direccion:dirDe(texto,tx,d),con:d&&d.jefe&&sinAcento(con)===sinAcento(d.jefe)?"":con,prioridad:/urgente|importante|prioritari/.test(tx)?"alta":"normal",notas:""}}
 function numerosTexto(t){return t.replace(/\b(a las?) (una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b/gi,(m,a,n)=>a+" "+NUM[sinAcento(n.toLowerCase())])}
 
 /* ---------- Respuestas ---------- */
@@ -1100,7 +1206,7 @@ function hablarLista(l){return l.slice(0,3).map(t=>`${t.titulo}${t.con?", con "+
 function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hecho);
   if(!act.length)return{texto:"No tienes pendientes activos. Dime “anota…” y lo agrego.",voz:"No tienes pendientes. Cuando quieras, dime anota, y lo agrego."};
   const habla=/direccion|coordinacion|jefe|titular|administrativ|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema/.test(tx)||dirs.some(x=>x.jefe&&sinAcento(x.jefe).split(/\s+/).some(w=>w.length>=4&&tx.includes(w)));
-  const d=habla?buscarDir(q):null;let base=d?act.filter(t=>t.direccion===d.nombre):act;
+  const d=habla?buscarDir(q):null;let base=d?act.filter(t=>tocaDir(t,d.nombre)):act;
   const pm=tx.match(/\bcon\s+([a-z]{3,})/);if(!d&&pm&&!/^(la|el|los|las)$/.test(pm[1])){const p=base.filter(t=>sinAcento(t.con||"").includes(pm[1]));if(p.length)base=p}
   let sel,enc;
   if(/vencid|se me paso|atrasad|retras|pendiente.*pasad/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return n!==null&&n<0});enc="Vencidos"}
@@ -1291,6 +1397,8 @@ $("#fp-cfg").onclick=()=>{const c=$("#cfg");c.hidden=!c.hidden;$("#fp-cfg").setA
 $("#cfg-hablar").checked=cfg.hablar;$("#cfg-vel").value=cfg.vel;$("#cfg-manos").checked=false;
 function ponerVoz(on){cfg.hablar=on;guardarCfg();if(!on&&TTS)TTS.cancel();$("#cfg-hablar").checked=on;const b=$("#fp-voz");b.setAttribute("aria-pressed",String(on));b.title=on?"Quitar la voz":"Activar la voz";b.setAttribute("aria-label",b.title);b.classList.toggle("mudo",!on);fab.classList.remove("talking")}
 $("#cfg-hablar").onchange=e=>ponerVoz(e.target.checked);
+try{$("#cfg-intro").checked=localStorage.getItem("agendaCelia.intro")!=="no"}catch(e){}
+$("#cfg-intro").onchange=e=>{try{localStorage.setItem("agendaCelia.intro",e.target.checked?"si":"no")}catch(x){}};
 $("#fp-voz").onclick=()=>{ponerVoz(!cfg.hablar);setEstado(cfg.hablar?"Voz activada":"Voz desactivada: solo te respondo por escrito")};
 ponerVoz(cfg.hablar);
 $("#cfg-voz").onchange=e=>{cfg.voz=e.target.value;guardarCfg();decir("Hola, Celia. Así sueno ahora.")};
