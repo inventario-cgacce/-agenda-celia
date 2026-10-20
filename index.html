@@ -215,7 +215,8 @@ body:has(.overlay:not([hidden])) #fab,body:has(.overlay:not([hidden])) #fp{displ
 .intro-s{margin:12px auto 0;font:500 clamp(12.5px,1.6vw,15px)/1.4 var(--f-body,Arial,sans-serif);color:#C9DCCF;opacity:0;animation:introSube .9s ease 2.2s forwards;max-width:560px}
 .intro-btns{position:absolute;left:0;right:0;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;opacity:0;animation:introSube .6s ease .8s forwards}
 .intro-btns button{border:1px solid rgba(255,255,255,.45);background:rgba(4,23,12,.45);backdrop-filter:blur(6px);color:#fff;border-radius:999px;padding:10px 20px;font:700 14px var(--f-body,Arial,sans-serif)}
-.intro-btns #intro-entrar{background:#C9D300;color:#0B3A1D;border-color:#C9D300}
+.intro-btns #intro-entrar{background:#C9D300;color:#0B3A1D;border-color:#C9D300;font-size:16px;padding:12px 30px;animation:introPulso 2.4s ease-in-out 3s infinite}
+@keyframes introPulso{0%,100%{box-shadow:0 0 0 0 rgba(201,211,0,.55)}50%{box-shadow:0 0 0 12px rgba(201,211,0,0)}}
 .intro-bar{position:absolute;left:0;top:0;height:3px;width:0;background:#C9D300}
 @keyframes introLetra{to{opacity:1;transform:none}}
 @keyframes introSube{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -372,7 +373,7 @@ body.con-intro #fab,body.con-intro #fp{display:none}
   <div class="intro-btns"><button type="button" id="intro-son">Activar sonido</button><button type="button" id="intro-entrar">Entrar ›</button></div>
 </div>
 <script>
-/* Presentación al abrir: una vez por sesión; se puede apagar en la configuración del asistente */
+/* Presentación al abrir: se queda hasta presionar Entrar; una vez por sesión; se puede apagar en la configuración del asistente */
 (function(){
   var el=document.getElementById("intro");if(!el)return;
   var apagada=false,vista=false;try{apagada=localStorage.getItem("agendaCelia.intro")==="no";vista=sessionStorage.getItem("agendaCelia.introVista")==="1"}catch(e){}
@@ -382,12 +383,9 @@ body.con-intro #fab,body.con-intro #fp{display:none}
   var spans=el.querySelectorAll(".intro-k span");for(var i=0;i<spans.length;i++)spans[i].style.animationDelay=(0.25+i*0.09)+"s";
   function cerrar(){if(cerrada)return;cerrada=true;try{sessionStorage.setItem("agendaCelia.introVista","1")}catch(e){}
     el.classList.add("fuera");document.body.classList.remove("con-intro");try{v.pause()}catch(e){}setTimeout(function(){el.remove()},750)}
-  function avance(){if(cerrada)return;var p=v.duration&&!v.paused?v.currentTime/v.duration:(Date.now()-t0)/DUR;bar.style.width=Math.min(100,p*100)+"%";requestAnimationFrame(avance)}
-  v.src="intro.mp4";
-  v.addEventListener("ended",cerrar);
-  v.addEventListener("error",function(){setTimeout(cerrar,3800)});
-  var pr=v.play();if(pr&&pr.catch)pr.catch(function(){setTimeout(cerrar,4200)});
-  setTimeout(cerrar,DUR+2500); /* por si el video no avanza */
+  function avance(){if(cerrada)return;var p=v.duration&&!v.paused?v.currentTime/v.duration:((Date.now()-t0)%DUR)/DUR;bar.style.width=Math.min(100,p*100)+"%";requestAnimationFrame(avance)}
+  v.loop=true;v.src="intro.mp4";
+  var pr=v.play();if(pr&&pr.catch)pr.catch(function(){});
   requestAnimationFrame(avance);
   document.getElementById("intro-entrar").onclick=cerrar;
   son.onclick=function(){v.muted=!v.muted;if(!v.muted){v.volume=.8;v.play&&v.play()}son.textContent=v.muted?"Activar sonido":"Quitar sonido"};
