@@ -1441,14 +1441,14 @@ function platica(tx){
   // saludo solo
   if(/^(hola+|holi|hey|oye|buenas|buen dia|buenos dias|buenas tardes|buenas noches|que tal|hola que tal|hola buenos dias|hola buenas tardes|hola buenas noches|hola buen dia)$/.test(t)){
     if(/^buenas noches$/.test(t)&&new Date().getHours()>=20)return resp("Buenas noches, Celia. Que descanses; mañana seguimos.");
-    const r=resumenCorto();return resp(`${saludoHora()}, Celia. ¿Cómo estás?\n\n${r}`,`${saludoHora()}, Celia. ¿Cómo estás? ${r}`)}
+    return resp(unaDe([`${saludoHora()}, Celia. ¿Cómo estás?`,`¡${saludoHora()}, Celia! ¿Cómo estás?`,`${saludoHora()}, Celia. ¿Cómo te va?`]))}
   // cómo estás
   if(/^(hola )?(como estas|como te va|como has estado|como andas|que tal estas|que tal tu dia|como te sientes|como amaneciste|todo bien)( hoy)?$/.test(t))
     return resp(unaDe(["Muy bien, gracias por preguntar. ¿Y tú cómo estás?","Muy bien, lista para ayudarte. ¿Y tú, cómo vas?","Bien, gracias. ¿Cómo te sientes tú hoy?"]));
   if(/^(y tu|y usted|y tu como estas|y tu que tal)$/.test(t))return resp("Muy bien, gracias. Contenta de ayudarte con tu agenda.");
   // cómo está ella
   if(/^(muy |super |bastante )?(bien|excelente|perfecto|de maravilla|genial|contenta|feliz|todo bien|bien gracias|muy bien gracias|bien y tu|muy bien y tu|bien gracias y tu)$/.test(t))
-    return resp(unaDe(["Qué gusto, Celia. ","Me da mucho gusto. "])+(/y tu$/.test(t)?"Yo también, gracias. ":"")+resumenCorto());
+    return resp(unaDe(["Qué gusto, Celia.","Me da mucho gusto, Celia.","¡Qué bien, Celia!"])+(/y tu$/.test(t)?" Yo también, gracias.":"")+unaDe([""," ¿En qué te ayudo?",""]));
   if(/^(mas o menos|ahi va|ahi vamos|regular|pues ahi|normal)$/.test(t)){ofrecido="hoy";return resp("Ánimo, Celia. Vamos paso a paso. ¿Quieres que te diga solo lo urgente de hoy?")}
   if(/(cansad|agotad|harta|estresad|agobiad|presionad|abrumad|mucho trabajo|muchas cosas|no me da tiempo|no acabo|no termino|muy ocupad)/.test(t)){ofrecido="hoy";
     return resp(unaDe(["Te entiendo; hay días muy pesados. Vamos de uno en uno. ¿Quieres que te diga solo lo urgente de hoy?","Lo siento, Celia. Respira un momento; lo vamos ordenando juntas. ¿Te digo qué es lo más urgente?"]))}
@@ -1472,7 +1472,7 @@ function platica(tx){
   // despedidas
   if(/^(adios|bye|hasta luego|hasta manana|nos vemos|me voy|chao|chau|hasta pronto|ya me voy|bonito dia|buen fin|buen fin de semana)/.test(t)){
     const r=tasks.filter(x=>!x.hecho&&diasHasta(x.fecha)===1).length;
-    return resp(`Hasta luego, Celia. Que te vaya muy bien.${r?` Mañana tienes ${r===1?"un pendiente":r+" pendientes"}; aquí te los guardo.`:""}`)}
+    return resp(unaDe(["Hasta luego, Celia. Que te vaya muy bien.","Hasta luego, Celia. Aquí estaré cuando me necesites.","Que estés muy bien, Celia. Hasta luego."]))}
   // hora y fecha
   if(/(que hora es|que horas son|me dices la hora)/.test(t)){const d=new Date(),hh=String(d.getHours()).padStart(2,"0"),mm=String(d.getMinutes()).padStart(2,"0");const h=horaHablada(hh+":"+mm).replace(/^a las? /,"");const h12=d.getHours()%12||12;return resp(`${h12===1?"Es la":"Son las"} ${h12}:${mm} ${d.getHours()<12?"a. m.":"p. m."}`,(/^1\b/.test(h)?"Es la ":"Son las ")+h+".")}
   if(/^(dime|dime algo|a ver|aver|y bien|que mas|y que mas|mande|si dime)$/.test(t))return resp("Dime qué necesitas, Celia. Puedo decirte qué tienes hoy o esta semana, qué está vencido, anotar o mover un pendiente, o explicarte un concepto del área.","Dime qué necesitas, Celia. Puedo decirte qué tienes hoy, anotar o mover un pendiente, o explicarte un concepto.");
@@ -1509,7 +1509,7 @@ function ubicarPanel(){
 }
 let saludado=false;
 function abrirPanel(){fp.hidden=false;fab.setAttribute("aria-expanded","true");ubicarPanel();requestAnimationFrame(()=>fp.classList.add("in"));
-  if(!saludado){saludado=true;const r=responder("que tengo hoy");botDice(`Hola, Celia. Soy Lexi.\n\n${r.texto}`,null)}
+  if(!saludado){saludado=true;const r=responder("que tengo hoy");botDice("Hola, Celia. Soy Lexi. ¿En qué te ayudo?",null)}
   setTimeout(()=>$("#q-in").focus({preventScroll:true}),60)}
 function cerrarPanel(){fp.classList.remove("in");fab.setAttribute("aria-expanded","false");setTimeout(()=>{fp.hidden=true},180)}
 function togglePanel(){fp.hidden?abrirPanel():cerrarPanel()}
