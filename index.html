@@ -558,7 +558,7 @@ body.con-intro #fab,body.con-intro #fp{display:none}
       <label class="sw" for="cfg-intro"><input type="checkbox" id="cfg-intro" checked> Presentación al abrir</label>
     </div>
     <button class="btn ghost small" type="button" id="cfg-probar">Probar voz</button>
-    <p class="note">Para la voz más natural: en computadora usa Microsoft Edge y elige una voz que diga “Natural”; en Android, Chrome con las voces de Google.</p>
+    <p class="note">Para que Lexi suene más humano: en computadora usa <b>Microsoft Edge</b> y elige una voz que diga “Natural” (por ejemplo Dalia); en Android usa Chrome con las voces de Google; en iPhone descarga una voz “Mejorada” o “Premium” en Ajustes › Accesibilidad › Contenido leído › Voces.</p>
   </div>
   <div class="chips">
     <button type="button" data-q="¿Qué tengo hoy?">Hoy</button>
@@ -1241,7 +1241,7 @@ function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hech
   const cuandoV={Vencidos:"vencidos","Pasado mañana":"para pasado mañana",Mañana:"para mañana","Para hoy":"para hoy","Esta semana":"esta semana","En rojo":"en rojo","Tus pendientes activos":"en total"}[enc];
   let voz=!sel.length?`No tienes nada ${cuandoV}${d?" con esa dirección":""}. Vas bien.`:
     `Tienes ${sel.length===1?"un pendiente":sel.length+" pendientes"} ${cuandoV}${d?" con "+d.nombre.replace(/^Dirección de /,"la dirección de "):""}. ${hablarLista(sel)}`+(r&&enc!=="En rojo"?` ${r===1?"Uno está":r+" están"} en rojo; empieza por ahí.`:"");
-  return{texto,voz};
+  return{texto,voz:unaDe(["","","A ver. ","Mira. ","Déjame ver. "])+voz};
 }
 function fraseColor(t){const c=color(t);return c==="r"?"Lo puse en rojo.":c==="a"?"Queda en amarillo.":"Queda en verde, vas con tiempo."}
 function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(texto);agregar(t);persistir();
@@ -1394,7 +1394,7 @@ function platica(tx){
 
 /* ---------- Burbuja ---------- */
 const fab=$("#fab"),fp=$("#fp"),POS_KEY="agendaSemaforo.burbuja",CFG_KEY="agendaSemaforo.voz";
-let cfg={hablar:true,voz:"",vel:1,manos:false};try{Object.assign(cfg,JSON.parse(localStorage.getItem(CFG_KEY)||"{}"))}catch(e){}
+let cfg={hablar:true,voz:"",vel:0.97,manos:false};try{Object.assign(cfg,JSON.parse(localStorage.getItem(CFG_KEY)||"{}"))}catch(e){}
 const guardarCfg=()=>{try{localStorage.setItem(CFG_KEY,JSON.stringify(cfg))}catch(e){}};
 function colocar(x,y){const s=fab.offsetWidth||64;x=Math.max(8,Math.min(innerWidth-s-8,x));y=Math.max(8,Math.min(innerHeight-s-8,y));fab.style.left=x+"px";fab.style.top=y+"px";if(!fp.hidden)ubicarPanel()}
 function posInicial(){let p=null;try{p=JSON.parse(localStorage.getItem(POS_KEY)||"null")}catch(e){}
@@ -1437,15 +1437,32 @@ $("#quick").addEventListener("submit",e=>{e.preventDefault();const v=$("#quick-i
 /* ---------- Voz que habla ---------- */
 const TTS=window.speechSynthesis;let voces=[];
 function puntuar(v){let p=0;const n=v.name.toLowerCase();if(/^es[-_]mx/i.test(v.lang))p+=40;else if(/^es[-_](us|419)/i.test(v.lang))p+=30;else if(/^es/i.test(v.lang))p+=15;else return -1;
-  if(/natural|neural|online|premium|enhanced|mejorad/.test(n))p+=50;if(/google/.test(n))p+=25;if(/dalia|paulina|sabina|jorge|elvira|helena|monica|marisol|camila|lupe|renata/.test(n))p+=10;if(/compact|espeak/.test(n))p-=30;return p}
+  if(/natural|neural/.test(n))p+=70;else if(/online|premium|enhanced|mejorad|siri/.test(n))p+=50;if(/google/.test(n))p+=25;
+  if(/dalia|paulina|sabina|elvira|helena|monica|marisol|camila|lupe|renata|larissa|elena|ximena|marina|valeria|candela|nuria|beatriz/.test(n))p+=12;else if(/jorge|juan|diego|raul|alvaro|gerardo|cecilio|pablo/.test(n))p+=4;
+  if(/compact|espeak|eloquence|grandma|grandpa|rocko|shelley|flo|reed|sandy|eddy/.test(n))p-=40;if(v.localService===false)p+=5;return p}
+const vozNeural=v=>!!v&&/natural|neural|online|google|premium|enhanced|mejorad|siri/i.test(v.name);
 function cargarVoces(){if(!TTS)return;voces=TTS.getVoices().filter(v=>puntuar(v)>=0).sort((a,b)=>puntuar(b)-puntuar(a));
   const sel=$("#cfg-voz");sel.innerHTML=voces.length?voces.map(v=>`<option value="${esc(v.name)}">${esc(v.name.replace(/Microsoft |Google |\(.*?\)|- Spanish.*$/g,"").trim()||v.name)} · ${v.lang}</option>`).join(""):`<option value="">Sin voces en español</option>`;
   if(!cfg.voz||!voces.some(v=>v.name===cfg.voz))cfg.voz=voces[0]?.name||"";sel.value=cfg.voz}
 if(TTS){cargarVoces();TTS.onvoiceschanged=cargarVoces}
+function paraVoz(t){ // deja el texto listo para decirse en voz alta, como lo diría una persona
+  return String(t)
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,"")
+    .replace(/[•▪→›“”"]/g,"").replace(/\s*·\s*/g,", ")
+    .replace(/°\s?C\b/g," grados").replace(/\bkm\b/g,"kilómetros").replace(/\bMB\b/g,"megas")
+    .replace(/\(([^)]{1,60})\)/g,", $1,")
+    .replace(/:\s*\n/g,". ").replace(/\n+/g,". ")
+    .replace(/\s+([,.;:!?])/g,"$1").replace(/([,.;:])\1+/g,"$1").replace(/\.\s*,/g,".").replace(/,\s*\./g,".")
+    .replace(/\s{2,}/g," ").trim();
+}
 function decir(t,suave){if(!cfg.hablar||!TTS||!t)return;TTS.cancel();
-  const frases=t.replace(/\s*·\s*/g,", ").match(/[^.!?]+[.!?]?/g)||[t];
-  frases.forEach((f,i)=>{const u=new SpeechSynthesisUtterance(f.trim());const v=voces.find(x=>x.name===cfg.voz);if(v){u.voice=v;u.lang=v.lang}else u.lang="es-MX";
-    u.rate=cfg.vel*(i===0?1:1.02);u.pitch=1.02;u.onstart=()=>fab.classList.add("talking");u.onend=()=>{if(i===frases.length-1)fab.classList.remove("talking")};TTS.speak(u)});
+  const frases=(paraVoz(t).match(/[^.!?…]+[.!?…]*/g)||[t]).map(f=>f.trim()).filter(f=>f.replace(/[.,!?¿¡…\s]/g,"").length);
+  const v=voces.find(x=>x.name===cfg.voz)||voces[0],neural=vozNeural(v);
+  frases.forEach((f,i)=>{const u=new SpeechSynthesisUtterance(f);if(v){u.voice=v;u.lang=v.lang}else u.lang="es-MX";
+    const pregunta=/\?$/.test(f),exclama=/!$/.test(f),corta=f.length<28;
+    if(neural){u.rate=cfg.vel*(corta?0.97:1);u.pitch=1} // las voces naturales ya traen entonación propia
+    else{u.rate=cfg.vel*(0.95+Math.random()*0.05)*(corta?0.97:1);u.pitch=pregunta?1.12:exclama?1.07:(0.99+Math.random()*0.05)}
+    u.onstart=()=>fab.classList.add("talking");u.onend=()=>{if(i===frases.length-1)fab.classList.remove("talking")};TTS.speak(u)});
 }
 
 /* ---------- Voz que escucha ---------- */
