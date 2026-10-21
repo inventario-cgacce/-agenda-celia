@@ -916,7 +916,7 @@ function renderDirs(){
       <div class="foot"><button class="btn ghost small" type="button" data-editdir="${d.id}">${d.jefe?"Editar titular":"Agregar jefe/a"}</button>${act.length?`<button class="btn ghost small" type="button" data-verdir="${esc(d.nombre)}">Ver en tablero</button>`:""}<button class="x" type="button" data-deldir="${d.id}" aria-label="Borrar dirección" style="margin-left:auto">×</button></div></div>`}).join("");
 }
 function renderDone(){const l=tasks.filter(t=>t.hecho).sort(porFecha).reverse();$("#done").innerHTML=l.length?l.map(itemHTML).join(""):`<p class="empty">Cuando marques un pendiente como hecho aparecerá aquí.</p>`}
-function fillDirSelects(){
+function fillDirSelects(){VOCAB=null;
   const opts=dirs.map(d=>`<option value="${esc(d.nombre)}">${esc(d.nombre)}</option>`).join("");
   const a=$("#f-dir"),b=$("#fil-dir"),va=a.value,vb=b.value;
   a.innerHTML=`<option value="">— Ninguna —</option><option value="${esc(TODAS)}">Todas las direcciones</option>`+opts+`<option value="${FUERA_OPC}">Fuera (otra institución o lugar)</option>`;a.value=va;
@@ -991,12 +991,12 @@ async function subirDelForm(files,tareaId,titulo){
 $("#f").addEventListener("submit",e=>{e.preventDefault();
   const sel=$("#f-dir").value,donde=$("#f-donde").value.trim();
   const direccion=sel===FUERA_OPC?(donde?FUERA_PRE+donde:"Fuera"):sel;
-  const v={titulo:$("#f-titulo").value.trim(),fecha:$("#f-fecha").value,hora:$("#f-hora").value,direccion,con:$("#f-con").value.trim(),prioridad:$("#f-prio").value,notas:$("#f-notas").value.trim()};
+  const corrF=[];const v={titulo:corregirTexto($("#f-titulo").value.trim(),corrF),fecha:$("#f-fecha").value,hora:$("#f-hora").value,direccion,con:$("#f-con").value.trim(),prioridad:$("#f-prio").value,notas:$("#f-notas").value.trim()};
   if(!v.titulo)return;
   const files=MODO==="nube"?[...$("#f-docs").files]:[];
   let t;if(editTask){Object.assign(editTask,v);t=editTask}else t=agregar(v);
-  cerrar();persistir();if(files.length)subirDelForm(files,t.id,t.titulo)});
-function agregar(t){const n={id:uid(),titulo:t.titulo,fecha:t.fecha||"",hora:t.hora||"",con:t.con||"",direccion:t.direccion||"",notas:t.notas||"",prioridad:t.prioridad==="alta"?"alta":"normal",hecho:false,creado:new Date().toISOString(),autor:yo()};tasks.push(n);return n}
+  cerrar();persistir();if(corrF.length)$("#quick-status").textContent="Guardado. Corregí la ortografía: "+corrF.join(", ")+".";if(files.length)subirDelForm(files,t.id,t.titulo)});
+function agregar(t){delete t.correcciones;const n={id:uid(),titulo:t.titulo,fecha:t.fecha||"",hora:t.hora||"",con:t.con||"",direccion:t.direccion||"",notas:t.notas||"",prioridad:t.prioridad==="alta"?"alta":"normal",hecho:false,creado:new Date().toISOString(),autor:yo()};tasks.push(n);return n}
 
 /* ---------- Exportar a Excel (.xlsx real, sin internet) ---------- */
 const XL=(()=>{
@@ -1210,51 +1210,124 @@ function dirDe(texto,tx,d){
   if(/\bfuera\b/.test(tx)&&!d)return"Fuera";
   return d?d.nombre:"";
 }
-function interpretar(texto){const tx=numeros(sinAcento(texto)),d=buscarDir(texto),con=leerPersona(texto);
-  return{titulo:limpiarTitulo(numerosTexto(texto)),fecha:leerFecha(tx),hora:leerHora(tx),direccion:dirDe(texto,tx,d),con:d&&d.jefe&&sinAcento(con)===sinAcento(d.jefe)?"":con,prioridad:/urgente|importante|prioritari/.test(tx)?"alta":"normal",notas:""}}
+/* ---------- Corrector de ortografía para los pendientes (sin internet) ---------- */
+const VOCAB_BASE=("reunión junta juntas sala coordinación coordinador coordinadora dirección director directora subdirección jefatura departamento oficina oficinas "+
+ "oficio oficios minuta minutas memorándum circular informe informes reporte reportes documento documentos expediente archivo anexo anexos carpeta "+
+ "entrega entregar enviar envío revisar revisión revisiones corregir corrección observaciones comentarios opinión opiniones técnica técnico técnicas técnicos "+
+ "presentación presentaciones propuesta propuestas proyecto proyectos programa programas manejo seguimiento evaluación análisis estudio estudios diagnóstico "+
+ "capacitación taller talleres curso cursos conferencia seminario foro evento eventos sesión sesiones videollamada llamada llamadas visita visitas comisión comisiones viáticos viaje "+
+ "firma firmas firmar autorización solicitud solicitudes respuesta respuestas atención agenda calendario pendiente pendientes urgente importante "+
+ "adaptación mitigación vulnerabilidad resiliencia riesgo riesgos climático climática cambio ambiental ambientales ecología ecosistemas ecosistema conservación "+
+ "cuenca cuencas hidrológicos hidrológico servicios economía recursos naturales administrativa administrativo protegidas áreas área impacto manifestación "+
+ "secretaría instituto institución nacional general estatal municipal federal gobierno dependencia oficial jurídico jurídica legal normatividad "+
+ "presupuesto contrato contratos licitación factura facturas pago pagos compra compras inventario insumos material materiales equipo "+
+ "integración actualización elaboración preparación organización planeación coordinar organizar preparar elaborar actualizar validar validación "+
+ "terminos referencia consultoría consultor convenio convenios acuerdo acuerdos minutario correo correos teléfono necesito hacer hacerlo hasta").split(/\s+/);
+let VOCAB=null;
+function clavePh(w){let x=sinAcento(w).toLowerCase().replace(/ch/g,"ç").replace(/h/g,"").replace(/ç/g,"ch").replace(/v/g,"b").replace(/z/g,"s").replace(/c([ei])/g,"s$1").replace(/qu/g,"k").replace(/c/g,"k").replace(/ll/g,"y").replace(/x(?=[aeiou])/g,"ks").replace(/(.)\1+/g,"$1");return x}
+function lev(a,b){if(Math.abs(a.length-b.length)>1)return 9;const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+function vocab(){if(VOCAB)return VOCAB;const set=new Set();
+  const add=w=>{if(w&&w.length>=4&&!/\d/.test(w)){set.add(w.toLowerCase());if(!/s$/.test(w))set.add(w.toLowerCase()+(/[aeiouáéíóú]$/.test(w)?"s":"es"))}};
+  VOCAB_BASE.forEach(add);dirs.forEach(d=>d.nombre.split(/\s+/).forEach(add));
+  VOCAB=[...set].map(w=>({w,s:sinAcento(w),k:clavePh(w)}));return VOCAB}
+function corregirPalabra(w,cambios){
+  if(w.length<4||/\d/.test(w)||SIGLAS.includes(w.toUpperCase())||/^[A-ZÁÉÍÓÚÑ]{2,}$/.test(w)&&w.length<=6)return w;
+  const low=w.toLowerCase(),sa=sinAcento(low),V=vocab();
+  if(V.some(v=>v.w===low))return w;
+  let hit=V.find(v=>v.s===sa)||V.find(v=>v.k===clavePh(low));
+  if(!hit&&sa.length>=8){const k=clavePh(low);const c=V.filter(v=>v.s.length>=7&&v.s.slice(-3)===sa.slice(-3)&&v.s.slice(0,2)===sa.slice(0,2)&&(lev(k,v.k)===1||lev(sa,v.s)===1));if(c.length===1||(c.length>1&&c.every(v=>v.s===c[0].s)))hit=c[0]}
+  if(!hit||hit.w===low)return w;
+  let r=hit.w;if(w===w.toUpperCase())r=r.toUpperCase();else if(w[0]===w[0].toUpperCase())r=r.charAt(0).toUpperCase()+r.slice(1);
+  if(sinAcento(r).toLowerCase()!==sa)cambios.push(w+" → "+r);return r;
+}
+function corregirTexto(t,cambios=[]){if(!t)return t;
+  t=t.replace(/\bporfavor\b/gi,"por favor").replace(/\baver\b/gi,"a ver").replace(/\bnesesit/gi,m=>m[0]==="N"?"Necesit":"necesit");
+  let tras=false; // no tocar el nombre que va después de "con"
+  return t.replace(/[A-Za-zÁÉÍÓÚÑÜáéíóúñü]+/g,w=>{const prev=tras;tras=/^con$/i.test(w);if(prev&&w[0]===w[0].toUpperCase())return w;return corregirPalabra(w,cambios)});
+}
+const SIGLAS=["SEMARNAT","INECC","CGACCE","DGIRA","PROFEPA","CONANP","CONAGUA","CONAFOR","ANP","MIA","LGCC","LGEEPA","IPCC","PECC","ENCC","NDC","SAT","DOF","UICN","PNUD","GIZ","ONU","CDMX","SEMAR","SEDATU","CONABIO","IMTA"];
+function suavizar(s){ // si viene TODO EN MAYÚSCULAS, lo deja como oración y respeta siglas y nombres
+  if(!s)return s;const letras=s.replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ]/g,"");if(letras.length<4||letras.replace(/[^A-ZÁÉÍÓÚÑ]/g,"").length/letras.length<0.75)return s;
+  let r=s.toLowerCase().replace(/^./,c=>c.toUpperCase());
+  SIGLAS.forEach(a=>{r=r.replace(new RegExp("\\b"+a.toLowerCase()+"\\b","g"),a)});
+  r=r.replace(/\b(con|para|a)\s+([a-záéíóúñ]+)/g,(m,p,n)=>/^(el|la|los|las|un|una|todas|todos|riesgos|cuenca|semarnat)$/.test(n)?m:p+" "+n.charAt(0).toUpperCase()+n.slice(1));
+  return acentos(r);
+}
+function acentos(r){const A={reunion:"reunión",reuniones:"reuniones",coordinacion:"coordinación",direccion:"dirección",comision:"comisión",revision:"revisión",opinion:"opinión",tecnica:"técnica",tecnico:"técnico",publica:"pública",informacion:"información",presentacion:"presentación",sesion:"sesión",evaluacion:"evaluación",adaptacion:"adaptación",mitigacion:"mitigación",ecologia:"ecología",economia:"economía",climatico:"climático",climatica:"climática",manana:"mañana",dia:"día",envio:"envío",capacitacion:"capacitación"};
+  return r.replace(/\b([A-Za-z]+)\b/g,w=>{const k=w.toLowerCase();if(!A[k])return w;const v=A[k];return w[0]===w[0].toUpperCase()?v.charAt(0).toUpperCase()+v.slice(1):v})}
+const nombrePropio=p=>p&&p===p.toUpperCase()&&/[A-ZÁÉÍÓÚÑ]{2}/.test(p)?p.split(/\s+/).map(w=>SIGLAS.includes(w)?w:cap(w.toLowerCase())).join(" "):(p||"").split(/\s+/).map(w=>SIGLAS.includes(w.toUpperCase())?w.toUpperCase():w).join(" ");
+function interpretar(texto){const tx=numeros(sinAcento(texto)),d=buscarDir(texto),con=nombrePropio(leerPersona(texto));
+  const fuenteTitulo=texto.split(/\s*[·•]\s*|\n+/)[0];
+  const cambios=[];const titulo=corregirTexto(suavizar(limpiarTitulo(numerosTexto(fuenteTitulo))),cambios);
+  return{correcciones:cambios,titulo,fecha:leerFecha(tx),hora:leerHora(tx),direccion:dirDe(texto,tx,d),con:d&&d.jefe&&sinAcento(con)===sinAcento(d.jefe)?"":con,prioridad:/urgente|importante|prioritari/.test(tx)?"alta":"normal",notas:""}}
 function numerosTexto(t){return t.replace(/\b(a las?) (una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b/gi,(m,a,n)=>a+" "+NUM[sinAcento(n.toLowerCase())])}
 
 /* ---------- Respuestas ---------- */
 function fechaHablada(f){if(!f)return"sin fecha";const d=diasHasta(f),x=parseISO(f);if(d===0)return"hoy";if(d===1)return"mañana";if(d===2)return"pasado mañana";
   const base=`el ${DIAS[x.getDay()]} ${x.getDate()} de ${MESES[x.getMonth()]}`;return d<0?`${base}, que ya pasó`:base}
-function horaHablada(h){if(!h)return"";let[H,M]=h.split(":").map(Number);const parte=H<12?"de la mañana":H<19?"de la tarde":"de la noche";let h12=H%12||12;
-  if(H===12&&M===0)return"al mediodía";const min=M===0?"":M===30?" y media":M===15?" y cuarto":` y ${M}`;return `a la${h12===1?"":"s"} ${h12}${min} ${parte}`}
+function horaHablada(h){if(!h)return"";let[H,M]=h.split(":").map(Number);const parte=H<12?"de la mañana":H===12?"del día":H<19?"de la tarde":"de la noche";let h12=H%12||12;
+  if(H===12&&M===0)return"al mediodía";const min=M===0?"":M===30?" y media":M===15?" y cuarto":M===1?" y un minuto":` y ${M}`;return `a la${h12===1?"":"s"} ${h12}${min} ${parte}`}
 function lineas(l){if(!l.length)return"Nada.";const ico={r:"🔴",a:"🟡",g:"🟢",x:"✔️"};
-  return l.sort(orden).map(t=>`${ico[color(t)]} ${t.titulo}${t.con?" · con "+t.con:""}${t.direccion?"\n    "+t.direccion+(jefeDe(t.direccion)?" ("+jefeDe(t.direccion)+")":""):""}\n    ${cuando(t)}`).join("\n")}
+  return l.sort(orden).map(t=>`${ico[color(t)]} ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?"\n    "+t.direccion+(jefeDe(t.direccion)?" ("+jefeDe(t.direccion)+")":""):""}\n    ${cuando(t)}`).join("\n")}
 function hablarLista(l){return l.slice(0,3).map(t=>`${t.titulo}${t.con?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}`).join(". ")+(l.length>3?`. Y ${l.length-3} más en la pantalla.`:".")}
 function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hecho);
   if(!act.length)return{texto:"No tienes pendientes activos. Dime “anota…” y lo agrego.",voz:"No tienes pendientes. Cuando quieras, dime anota, y lo agrego."};
   const habla=/direccion|coordinacion|jefe|titular|administrativ|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema/.test(tx)||dirs.some(x=>x.jefe&&sinAcento(x.jefe).split(/\s+/).some(w=>w.length>=4&&tx.includes(w)));
   const d=habla?buscarDir(q):null;let base=d?act.filter(t=>tocaDir(t,d.nombre)):act;
   const pm=tx.match(/\bcon\s+([a-z]{3,})/);if(!d&&pm&&!/^(la|el|los|las)$/.test(pm[1])){const p=base.filter(t=>sinAcento(t.con||"").includes(pm[1]));if(p.length)base=p}
-  let sel,enc;
-  if(/vencid|se me paso|atrasad|retras|pendiente.*pasad/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return n!==null&&n<0});enc="Vencidos"}
-  else if(/pasado manana/.test(tx)){sel=base.filter(t=>diasHasta(t.fecha)===2);enc="Pasado mañana"}
-  else if(/\bmanana\b/.test(tx)){sel=base.filter(t=>diasHasta(t.fecha)===1);enc="Mañana"}
-  else if(/\bhoy\b/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return(n!==null&&n<=0)||t.prioridad==="alta"});enc="Para hoy"}
-  else if(/semana/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return(n!==null&&n<=7)||t.prioridad==="alta"});enc="Esta semana"}
-  else if(/urgente|rojo|prioridad/.test(tx)){sel=base.filter(t=>color(t)==="r");enc="En rojo"}
-  else{sel=base;enc="Tus pendientes activos"}
+  const KW=tx.match(/\b(reunion|reuniones|junta|juntas|entrega|entregas|cita|citas|llamada|llamadas|oficio|oficios|comision|comisiones|viaje|viajes|evento|eventos|taller|talleres|curso|cursos|firma|firmas)\b/);
+  const kwRaiz=KW?KW[1].replace(/(es|s)$/,"").slice(0,6):"";const kwNom=KW?({reunion:"reuniones",reuniones:"reuniones",junta:"juntas",juntas:"juntas",entrega:"entregas",entregas:"entregas",cita:"citas",citas:"citas",llamada:"llamadas",llamadas:"llamadas",oficio:"oficios",oficios:"oficios",comision:"comisiones",comisiones:"comisiones",viaje:"viajes",viajes:"viajes",evento:"eventos",eventos:"eventos",taller:"talleres",talleres:"talleres",curso:"cursos",cursos:"cursos",firma:"firmas",firmas:"firmas"})[KW[1]]:"";
+  if(KW)base=base.filter(t=>sinAcento(t.titulo+" "+t.notas).includes(kwRaiz));
+  const siguiente=l=>l.filter(t=>t.fecha&&diasHasta(t.fecha)>=0).sort(porFecha)[0]||null;
+  const que=kwNom||"pendientes";
+  // "¿cuándo tengo…?" → el próximo
+  if(/\bcuando\b|\bpara cuando\b|\bproxim[oa]\b|\bque sigue\b|\bque es lo siguiente\b/.test(tx)&&!/vencid/.test(tx)){
+    const nx=siguiente(base);
+    if(!nx)return{texto:KW?`No tienes ${que} próximas en la agenda.`:"No tienes pendientes con fecha próxima.",voz:KW?`No tienes ${que} próximas.`:"No tienes pendientes con fecha próxima."};
+    const sing=acentos(KW?KW[1].replace(/(es|s)$/,""):"");const art=KW?(/^(reuni|junta|entre|cita|llama|comis|firma)/.test(kwRaiz)?"Tu próxima "+sing:"Tu próximo "+sing):"Lo siguiente que tienes";
+    const t1=`${art}: ${nx.titulo}${nx.con&&!sinAcento(nx.titulo).includes(sinAcento(nx.con))?" · con "+nx.con:""}\n    ${cuando(nx)}`;
+    return{texto:t1,voz:`${art.replace(/:$/,"")} es ${nx.titulo}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`};
+  }
+  let sel,enc,cuandoV,vacio;const fq=leerFecha(tx);
+  if(/vencid|se me paso|atrasad|retras|pendiente.*pasad/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return n!==null&&n<0});enc="Vencidos";cuandoV="vencidos";vacio=KW?`No tienes ${que} vencidas.`:"No tienes nada vencido. ¡Vas al día!"}
+  else if(/pasado manana/.test(tx)){sel=base.filter(t=>diasHasta(t.fecha)===2);enc="Pasado mañana";cuandoV="para pasado mañana";vacio=`Pasado mañana no tienes ${KW?que:"nada"}.`}
+  else if(/\bmanana\b/.test(tx.replace(/de la manana/g,""))){sel=base.filter(t=>diasHasta(t.fecha)===1);enc="Mañana";cuandoV="para mañana";vacio=`Mañana no tienes ${KW?que:"nada"}.`}
+  else if(/\bhoy\b/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return(n!==null&&n<=0)||t.prioridad==="alta"});enc="Para hoy";cuandoV="para hoy";vacio=KW?`Hoy no tienes ${que}.`:"Hoy no tienes nada pendiente."}
+  else if(fq&&!/semana/.test(tx)){sel=base.filter(t=>t.fecha===fq);const fh=fechaLarga(fq);enc=cap(fh);cuandoV=fh;vacio=`${cap(fh)}: no tienes ${KW?que:"nada"}.`}
+  else if(/semana/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return(n!==null&&n<=7)||t.prioridad==="alta"});enc="Esta semana";cuandoV="esta semana";vacio=`Esta semana no tienes ${KW?que:"nada"}.`}
+  else if(/urgente|rojo|prioridad/.test(tx)){sel=base.filter(t=>color(t)==="r");enc="En rojo";cuandoV="en rojo";vacio=KW?`No tienes ${que} en rojo.`:"No tienes nada en rojo."}
+  else{sel=base;enc=KW?cap(que):"Tus pendientes activos";cuandoV="en total";vacio=KW?`No tienes ${que} en la agenda.`:"No tienes pendientes activos."}
   sel.sort(orden);const r=sel.filter(t=>color(t)==="r").length;
   const quien=d?` con ${d.nombre}${d.jefe?" ("+d.jefe+")":""}`:"";
-  let texto=`${enc}${quien}: ${sel.length}\n\n${lineas(sel)}`;if(sel.length&&r)texto+=`\n\nEmpieza por ${r===1?"el que está":"los "+r+" que están"} en rojo.`;
-  const cuandoV={Vencidos:"vencidos","Pasado mañana":"para pasado mañana",Mañana:"para mañana","Para hoy":"para hoy","Esta semana":"esta semana","En rojo":"en rojo","Tus pendientes activos":"en total"}[enc];
-  let voz=!sel.length?`No tienes nada ${cuandoV}${d?" con esa dirección":""}. Vas bien.`:
-    `Tienes ${sel.length===1?"un pendiente":sel.length+" pendientes"} ${cuandoV}${d?" con "+d.nombre.replace(/^Dirección de /,"la dirección de "):""}. ${hablarLista(sel)}`+(r&&enc!=="En rojo"?` ${r===1?"Uno está":r+" están"} en rojo; empieza por ahí.`:"");
+  let texto,voz;
+  if(!sel.length){
+    const nx=siguiente(base.filter(t=>!sel.includes(t)));
+    const fin=x=>/[.!?]$/.test(x)?x:x+".";
+    texto=fin(vacio.replace(/\.$/,"")+(d?" con esa dirección":""))+(nx?`\n\nLo siguiente: ${nx.titulo}\n    ${cuando(nx)}`:"");
+    voz=fin(vacio.replace(/\.$/,"")+(d?" con esa dirección":""))+(nx?` Lo siguiente es ${nx.titulo}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`:" Vas bien.");
+  }else{
+    texto=`${enc}${quien}: ${sel.length}\n\n${lineas(sel)}`;if(r)texto+=`\n\nEmpieza por ${r===1?"el que está":"los "+r+" que están"} en rojo.`;
+    voz=`Tienes ${sel.length===1?(KW?"una":"un pendiente"):sel.length+(KW?"":" pendientes")}${KW?" "+(sel.length===1?KW[1].replace(/(es|s)$/,""):que):""} ${cuandoV}${d?" con "+d.nombre.replace(/^Dirección de /,"la dirección de "):""}. ${hablarLista(sel)}`+(r&&enc!=="En rojo"?` ${r===1?"Uno está":r+" están"} en rojo; empieza por ahí.`:"");
+  }
   return{texto,voz:unaDe(["","","A ver. ","Mira. ","Déjame ver. "])+voz};
 }
+function fechaLarga(f){const d=diasHasta(f),x=parseISO(f),base=`${DIAS[x.getDay()]} ${x.getDate()} de ${MESES[x.getMonth()]}`;
+  return d===0?"hoy, "+base:d===1?"mañana, "+base:d===2?"pasado mañana, "+base:"el "+base}
+const alFecha=f=>{const s=fechaHablada(f);return /^el /.test(s)?"al "+s.slice(3):s};
 function fraseColor(t){const c=color(t);return c==="r"?"Lo puse en rojo.":c==="a"?"Queda en amarillo.":"Queda en verde, vas con tiempo."}
-function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(texto);agregar(t);persistir();
-  const msg=`Anoté: ${t.titulo}${t.con?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`;
+function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(normTexto(texto));const corr=t.correcciones||[];agregar(t);persistir();
+  const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`. Corregí: ${corr.join(", ")}`:"");
   const voz=`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`;
   if(dest==="quick"){$("#quick-status").textContent=msg+". Si algo quedó mal, haz clic en el pendiente para corregirlo.";decir(voz,true)}
   else botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",voz);
 }
 function esOrden(tx){return /^(oye\s+|hey\s+|ey\s+)?(asistente\s+|agenda\s+|(?:lexi|lexy|lexie|lexis|leksi|lecsi)\s+)?(por favor\s+)?(me\s+)?(anota|apunta|agenda|agendame|registra|agrega|guarda|pon|ponme|crea|recuerdame|recordarme|tengo que|tengo una|tengo un|necesito)\b/.test(tx)}
 function esPregunta(tx){return /\?|^(oye\s+)?(asistente\s+|(?:lexi|lexy|lexie|lexis|leksi|lecsi)\s+)?(que|cual|cuales|cuando|cuantos|cuantas|dime|tengo algo|hay algo|como voy|como estoy|resumen|muestrame|lee|leeme)\b/.test(tx)||/\bque tengo\b|\bpendientes\b/.test(tx)}
+function normTexto(v){return v.replace(/\b(a)las\b/gi,(m,a)=>a+" las").replace(/\bala\b(?=\s*\d)/gi,"a la").replace(/(\d)\s*a\.\s*m\.?/gi,"$1 am").replace(/(\d)\s*p\.\s*m\.?/gi,"$1 pm").replace(/\s*\?{2,}/g,"?")}
 function procesar(texto){
   let v=texto.trim();if(!v)return;
-  yoDigo(v);
+  yoDigo(v);v=normTexto(v);
   const voc=v.match(/^\s*[¡¿]?\s*(?:(?:oye|hey|ey)\s+)?(?:lexi|lexy|lexie|lexis|leksi|lecsi)\b[\s,.:;!¡?¿]*/i);
   if(voc){const resto=v.slice(voc[0].length).trim();
     if(!resto){const m=unaDe(["¿Sí, Celia? Dime.","Aquí estoy, Celia. ¿En qué te ayudo?","Dime, Celia."]);return botDice(m,m)}
@@ -1268,10 +1341,28 @@ function procesar(texto){
     prefijo=saludoHora()+", Celia.";return procesarResto(resto)}
   procesarResto(v,true);
 }
+const STOPW=new Set("con para por del las los una uno unas unos que sus este esta ese esa the and dia dias hoy manana pasado lunes martes miercoles jueves viernes sabado domingo enero febrero marzo abril mayo junio julio agosto septiembre setiembre octubre noviembre diciembre proximo proxima siguiente semana horas hrs cambia cambiar cambiala cambialo mueve mover muevela muevelo pasa pasala pasalo recorre recorrer reprograma reprogramar pospon posponer aplaza aplazar adelanta adelantar ahora ahi".split(" "));
+const palabrasDe=w=>[...new Set(sinAcento(w||"").replace(/[^a-z0-9ñ\s]/g," ").split(/\s+/).filter(x=>x.length>=3&&!STOPW.has(x)&&!/^\d+$/.test(x)))];
+function intentarMover(v,tx){
+  const verbo=/\b(cambia|cambiar|cambiala|cambialo|mueve|mover|muevela|muevelo|pasa|pasala|pasalo|recorre|recorrer|reprograma|reprogramar|pospon|posponer|aplaza|aplazar|adelanta|adelantar|ahora es|se cambio|se movio)\b/.test(tx);
+  if(!verbo&&(esOrden(tx)||/\?/.test(v)))return false;
+  const n=numeros(tx),fecha=leerFecha(n),hora=leerHora(n);if(!fecha&&!hora)return false;
+  const ent=new Set(palabrasDe(v));let best=null,bs=0,empates=[];
+  tasks.filter(t=>!t.hecho).forEach(t=>{const tw=palabrasDe(t.titulo+" "+(t.con||""));if(!tw.length)return;const sc=tw.filter(w=>ent.has(w)).length/tw.length;
+    if(sc>bs+1e-9){bs=sc;best=t;empates=[t]}else if(sc>0&&Math.abs(sc-bs)<1e-9)empates.push(t)});
+  if(!best||bs<(verbo?0.34:0.75))return false;
+  if(empates.length>1){const l=empates.slice(0,4).map(t=>"• "+t.titulo+(t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:"")+" — "+cuando(t)).join("\n");
+    botDice("Encontré varios parecidos. ¿Cuál quieres mover? Dímelo con un detalle más, por ejemplo con quién es.\n\n"+l,"Encontré varios parecidos. ¿Cuál quieres mover? Dime con quién es.");return true}
+  const antes=cuando(best);if(fecha)best.fecha=fecha;if(hora)best.hora=hora;persistir();
+  const msg=`Listo, moví “${best.titulo}” ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.\nAntes estaba: ${antes}.`+(verbo?"":"\n\nSi querías anotar uno nuevo, dime “anota…”.");
+  botDice(msg,`Listo, lo moví ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.`);return true;
+}
 function procesarResto(v,yaDicho){const tx=sinAcento(v).replace(/[¿¡]/g,"");
+  if(intentarMover(v,tx))return;
   if(/\b(borra|elimina|quita)\b.*\b(ultimo|ultima)\b/.test(tx)){const t=tasks[tasks.length-1];if(!t)return botDice("No hay nada que borrar.","No hay nada que borrar.");tasks.pop();persistir();return botDice(`Borré: ${t.titulo}`,`Listo, borré ${t.titulo}.`)}
-  if(esOrden(tx)||(!esPregunta(tx)&&(RX_DIA.test(tx)||/\b\d{1,2}\s+de\s+[a-z]+|\ba las?\s/.test(numeros(tx))))){const t=interpretar(v);agregar(t);persistir();
-    const msg=`Anoté: ${t.titulo}${t.con?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`;
+  const preguntaTengo=/\?/.test(v)&&/^((oye|hey) )?((lexi|lexy|lexie) )?(tengo|hay)\b/.test(tx.replace(/\?/g,"").trim());
+  if((esOrden(tx)&&!preguntaTengo)||(!esPregunta(tx)&&!preguntaTengo&&(RX_DIA.test(tx)||/\b\d{1,2}\s+de\s+[a-z]+|\ba las?\s/.test(numeros(tx))))){const t=interpretar(v);const corr=t.correcciones||[];agregar(t);persistir();
+    const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`\n\nCorregí la ortografía: ${corr.join(", ")}.`:"");
     return botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`)}
   const sb=deSaber(tx);if(sb)return botDice(sb,sb);
   if(!deAgenda(tx)){const m=unaDe(["Eso no lo sé, Celia. Yo te ayudo con tu agenda.","Esa no me la sé, Celia; lo mío es tu agenda.","Mmm, eso se sale de lo que sé. Yo te ayudo con tu agenda."]);
@@ -1383,7 +1474,8 @@ function platica(tx){
     const r=tasks.filter(x=>!x.hecho&&diasHasta(x.fecha)===1).length;
     return resp(`Hasta luego, Celia. Que te vaya muy bien.${r?` Mañana tienes ${r===1?"un pendiente":r+" pendientes"}; aquí te los guardo.`:""}`)}
   // hora y fecha
-  if(/(que hora es|que horas son|me dices la hora)/.test(t)){const d=new Date();const h=horaHablada(String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")).replace(/^a las? /,"");return resp((/^1\b/.test(h)?"Es la ":"Son las ")+h+".")}
+  if(/(que hora es|que horas son|me dices la hora)/.test(t)){const d=new Date(),hh=String(d.getHours()).padStart(2,"0"),mm=String(d.getMinutes()).padStart(2,"0");const h=horaHablada(hh+":"+mm).replace(/^a las? /,"");const h12=d.getHours()%12||12;return resp(`${h12===1?"Es la":"Son las"} ${h12}:${mm} ${d.getHours()<12?"a. m.":"p. m."}`,(/^1\b/.test(h)?"Es la ":"Son las ")+h+".")}
+  if(/^(dime|dime algo|a ver|aver|y bien|que mas|y que mas|mande|si dime)$/.test(t))return resp("Dime qué necesitas, Celia. Puedo decirte qué tienes hoy o esta semana, qué está vencido, anotar o mover un pendiente, o explicarte un concepto del área.","Dime qué necesitas, Celia. Puedo decirte qué tienes hoy, anotar o mover un pendiente, o explicarte un concepto.");
   if(/(que dia es hoy|que fecha es|a cuanto estamos|que dia es)/.test(t)){const d=new Date();return resp("Hoy es "+d.toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+".")}
   // un chiste
   if(/(chiste|algo gracioso|hazme reir|animame|dame animo|motivame|una frase)/.test(t)){
