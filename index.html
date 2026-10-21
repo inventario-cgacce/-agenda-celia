@@ -422,7 +422,7 @@ body.con-intro #fab,body.con-intro #fp{display:none}
       <button class="nav" data-v="tablero"><svg><use href="#i-tab"/></svg>Tablero</button>
       <button class="nav" data-v="semana"><svg><use href="#i-sem"/></svg>Calendario</button>
       <button class="nav" data-v="direcciones"><svg><use href="#i-dir"/></svg>Direcciones<span class="n" id="n-dir">0</span></button>
-      <button class="nav" type="button" data-open-fab><svg><use href="#i-asi"/></svg>Asistente</button>
+      <button class="nav" type="button" data-open-fab><svg><use href="#i-asi"/></svg>Lexi</button>
       <button class="nav" data-v="hechos"><svg><use href="#i-ok"/></svg>Hechos<span class="n" id="n-ok">0</span></button>
       <button class="nav" data-v="docs"><svg><use href="#i-doc"/></svg>Documentos<span class="n" id="n-docs">0</span></button>
     </nav>
@@ -526,10 +526,10 @@ body.con-intro #fab,body.con-intro #fp{display:none}
   <button data-v="tablero"><svg><use href="#i-tab"/></svg>Tablero</button>
   <button data-v="semana"><svg><use href="#i-sem"/></svg>Calendario</button>
   <button data-v="direcciones"><svg><use href="#i-dir"/></svg>Direcc.</button>
-  <button type="button" data-open-fab><svg><use href="#i-asi"/></svg>Asistente</button>
+  <button type="button" data-open-fab><svg><use href="#i-asi"/></svg>Lexi</button>
 </nav>
 
-<button class="fab" id="fab" type="button" aria-label="Asistente de agenda. Arrástrala a donde quieras; tócala para abrir, doble toque para hablar" aria-expanded="false" aria-controls="fp">
+<button class="fab" id="fab" type="button" aria-label="Lexi, tu asistente de agenda. Arrástrala a donde quieras; tócala para abrir, doble toque para hablar" aria-expanded="false" aria-controls="fp">
   <span class="fab-ring"></span>
   <span class="fab-core">
     <svg class="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 1 7 7v1a7 7 0 0 1-7 7h-1l-4 3v-3.6A7 7 0 0 1 5 11v-1a7 7 0 0 1 7-7z"/><path d="M9 10.5h.01M12 10.5h.01M15 10.5h.01"/></svg>
@@ -542,7 +542,7 @@ body.con-intro #fab,body.con-intro #fp{display:none}
   <header class="fp-head">
     <div class="fp-av" aria-hidden="true"><span class="wave"><i></i><i></i><i></i><i></i><i></i></span></div>
     <div style="min-width:0;flex:1">
-      <div class="fp-t" id="fp-t">Asistente de agenda</div>
+      <div class="fp-t" id="fp-t">Lexi · tu asistente</div>
       <div class="fp-estado" id="fp-estado">Toca el micrófono y háblame</div>
     </div>
     <button class="fp-ic" type="button" id="fp-voz" aria-pressed="true" title="Quitar la voz"><svg class="v-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="v-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg></button>
@@ -554,7 +554,7 @@ body.con-intro #fab,body.con-intro #fp{display:none}
     <label for="cfg-vel">Velocidad<input id="cfg-vel" type="range" min="0.8" max="1.3" step="0.05" value="1"></label>
     <div class="cfg-row">
       <label class="sw" for="cfg-hablar"><input type="checkbox" id="cfg-hablar" checked> Responder en voz alta</label>
-      <label class="sw" for="cfg-manos"><input type="checkbox" id="cfg-manos"> Manos libres (“Oye agenda…”)</label>
+      <label class="sw" for="cfg-manos"><input type="checkbox" id="cfg-manos"> Manos libres (“Oye Lexi…”)</label>
       <label class="sw" for="cfg-intro"><input type="checkbox" id="cfg-intro" checked> Presentación al abrir</label>
     </div>
     <button class="btn ghost small" type="button" id="cfg-probar">Probar voz</button>
@@ -1184,7 +1184,7 @@ function leerPersona(texto){
 function limpiarTitulo(texto){
   let s=" "+texto.trim()+" ";
   const quitar=[
-    /^\s*(oye|hey|ey|hola)\b[\s,]*(asistente|agenda|claude)?[\s,]*/i,
+    /^\s*(oye|hey|ey|hola)?\b[\s,]*(asistente|agenda|claude|lexi|lexy|lexie|lexis|leksi|lecsi)?[\s,]*/i,
     /^\s*(por favor\s*)?(me\s+)?(anota(me)?|apunta(me)?|agenda(me)?|registra(me)?|agrega(me)?|guarda(me)?|pon(me)?|ponle|crea(me)?|recu[eé]rda(me)?(\s+que)?|recordarme(\s+que)?|tengo(\s+que)?|necesito)\b[\s,]*/i,
     /^\s*(por favor)\b[\s,]*/i,
     /\s*,?\s*(es\s+)?(muy\s+)?(urgente|importante|prioritari[oa])\b\.?/gi,
@@ -1250,11 +1250,17 @@ function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(texto);a
   if(dest==="quick"){$("#quick-status").textContent=msg+". Si algo quedó mal, haz clic en el pendiente para corregirlo.";decir(voz,true)}
   else botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",voz);
 }
-function esOrden(tx){return /^(oye\s+|hey\s+|ey\s+)?(asistente\s+|agenda\s+)?(por favor\s+)?(me\s+)?(anota|apunta|agenda|agendame|registra|agrega|guarda|pon|ponme|crea|recuerdame|recordarme|tengo que|tengo una|tengo un|necesito)\b/.test(tx)}
-function esPregunta(tx){return /\?|^(oye\s+)?(asistente\s+)?(que|cual|cuales|cuando|cuantos|cuantas|dime|tengo algo|hay algo|como voy|como estoy|resumen|muestrame|lee|leeme)\b/.test(tx)||/\bque tengo\b|\bpendientes\b/.test(tx)}
+function esOrden(tx){return /^(oye\s+|hey\s+|ey\s+)?(asistente\s+|agenda\s+|(?:lexi|lexy|lexie|lexis|leksi|lecsi)\s+)?(por favor\s+)?(me\s+)?(anota|apunta|agenda|agendame|registra|agrega|guarda|pon|ponme|crea|recuerdame|recordarme|tengo que|tengo una|tengo un|necesito)\b/.test(tx)}
+function esPregunta(tx){return /\?|^(oye\s+)?(asistente\s+|(?:lexi|lexy|lexie|lexis|leksi|lecsi)\s+)?(que|cual|cuales|cuando|cuantos|cuantas|dime|tengo algo|hay algo|como voy|como estoy|resumen|muestrame|lee|leeme)\b/.test(tx)||/\bque tengo\b|\bpendientes\b/.test(tx)}
 function procesar(texto){
-  const v=texto.trim();if(!v)return;const tx=sinAcento(v).replace(/[¿¡]/g,"");
+  let v=texto.trim();if(!v)return;
   yoDigo(v);
+  const voc=v.match(/^\s*[¡¿]?\s*(?:(?:oye|hey|ey)\s+)?(?:lexi|lexy|lexie|lexis|leksi|lecsi)\b[\s,.:;!¡?¿]*/i);
+  if(voc){const resto=v.slice(voc[0].length).trim();
+    if(!resto){const m=unaDe(["¿Sí, Celia? Dime.","Aquí estoy, Celia. ¿En qué te ayudo?","Dime, Celia."]);return botDice(m,m)}
+    v=resto}
+  const tx=sinAcento(v).replace(/[¿¡]/g,"");
+  if(/^(tu )?(eres|te llamas) (lexi|lexy|lexie|lexis|leksi|lecsi)\b/.test(tx.replace(/[?!.,]/g,"").trim()))return botDice("Sí, soy Lexi. ¿En qué te ayudo, Celia?","Sí, soy Lexi. ¿En qué te ayudo, Celia?");
   const pl=platica(tx);if(pl)return botDice(pl.texto,pl.voz||pl.texto);
   const sal=v.match(RX_SALUDO);
   if(sal&&sal[0].length<v.length){const resto=v.slice(sal[0].length),p2=platica(sinAcento(resto).replace(/[¿¡]/g,""));
@@ -1267,11 +1273,63 @@ function procesarResto(v,yaDicho){const tx=sinAcento(v).replace(/[¿¡]/g,"");
   if(esOrden(tx)||(!esPregunta(tx)&&(RX_DIA.test(tx)||/\b\d{1,2}\s+de\s+[a-z]+|\ba las?\s/.test(numeros(tx))))){const t=interpretar(v);agregar(t);persistir();
     const msg=`Anoté: ${t.titulo}${t.con?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`;
     return botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`)}
+  const sb=deSaber(tx);if(sb)return botDice(sb,sb);
+  if(!deAgenda(tx)){const m=unaDe(["Eso no lo sé, Celia. Yo te ayudo con tu agenda.","Esa no me la sé, Celia; lo mío es tu agenda.","Mmm, eso se sale de lo que sé. Yo te ayudo con tu agenda."]);
+    return botDice(m+"\n\nPor ejemplo:\n• “¿Qué tengo hoy?”\n• “¿Qué está vencido?”\n• “Anota reunión con Riesgos el jueves a las 10”",m+" Puedo decirte qué tienes hoy, qué está vencido, o anotar un pendiente.")}
   const r=responder(v);botDice(r.texto,r.voz);
 }
 
+/* ---------- Lo que Lexi sabe del área (glosario; sin internet, sin costo) ---------- */
+const SABER=[
+ [/\binecc\b|instituto nacional de ecologia/,"El INECC es el Instituto Nacional de Ecología y Cambio Climático. Lo crea la Ley General de Cambio Climático como un organismo público descentralizado, sectorizado a la SEMARNAT, que genera e integra conocimiento técnico y científico para la política de cambio climático y ecología."],
+ [/\bcgacce\b|coordinacion general de adaptacion/,"La CGACCE es la Coordinación General de Adaptación al Cambio Climático y Ecología del INECC. Agrupa a las direcciones de Riesgos, Cuenca, Economía Ambiental, Conservación de los Ecosistemas y a la Coordinación Administrativa."],
+ [/\blgcc\b|ley general de cambio climatico/,"La LGCC es la Ley General de Cambio Climático, publicada en 2012. Establece las bases de la política nacional de adaptación y mitigación, y crea, entre otros, al INECC y al Sistema Nacional de Cambio Climático."],
+ [/\blgeepa\b|ley general del equilibrio ecologico/,"La LGEEPA es la Ley General del Equilibrio Ecológico y la Protección al Ambiente, de 1988. Regula, entre otros temas, la evaluación del impacto ambiental, las áreas naturales protegidas y el ordenamiento ecológico."],
+ [/\bmia\b|manifestacion de impacto/,"La MIA es la Manifestación de Impacto Ambiental: el documento con el que se da a conocer, con base en estudios, el impacto ambiental significativo que generaría una obra o actividad y cómo evitarlo o atenuarlo. Puede ser modalidad particular o regional, y la evalúa la SEMARNAT a través de la DGIRA."],
+ [/\bdgira\b/,"La DGIRA es la Dirección General de Impacto y Riesgo Ambiental de la SEMARNAT. Es el área que evalúa las Manifestaciones de Impacto Ambiental."],
+ [/\bsemarnat\b/,"La SEMARNAT es la Secretaría de Medio Ambiente y Recursos Naturales, cabeza del sector ambiental federal. El INECC está sectorizado a ella."],
+ [/\bprofepa\b/,"La PROFEPA es la Procuraduría Federal de Protección al Ambiente: vigila el cumplimiento de la normatividad ambiental."],
+ [/\bconanp\b/,"La CONANP es la Comisión Nacional de Áreas Naturales Protegidas, encargada de administrar las áreas naturales protegidas federales."],
+ [/\bconagua\b/,"La CONAGUA es la Comisión Nacional del Agua, encargada de administrar y preservar las aguas nacionales."],
+ [/\banp\b|areas? naturales? protegidas?/,"Las ANP son Áreas Naturales Protegidas: zonas del territorio nacional cuyos ambientes originales no han sido significativamente alterados, o que requieren ser preservadas y restauradas, y que quedan sujetas al régimen de la LGEEPA."],
+ [/programas? de manejo/,"El programa de manejo es el instrumento de planeación y regulación de un área natural protegida: establece las actividades, acciones y lineamientos básicos para su manejo y administración."],
+ [/\badaptacion basada en ecosistemas\b|\babe\b/,"La adaptación basada en ecosistemas usa la biodiversidad y los servicios de los ecosistemas como parte de una estrategia para ayudar a las personas a adaptarse a los efectos adversos del cambio climático."],
+ [/\badaptacion\b/,"Según la LGCC, la adaptación son las medidas y ajustes en sistemas humanos o naturales, como respuesta a estímulos climáticos, proyectados o reales, o sus efectos, que pueden moderar el daño o aprovechar sus aspectos beneficiosos."],
+ [/\bmitigacion\b/,"Según la LGCC, la mitigación es la aplicación de políticas y acciones destinadas a reducir las emisiones de gases y compuestos de efecto invernadero, o a mejorar sus sumideros."],
+ [/\bvulnerabilidad\b/,"Según la LGCC, la vulnerabilidad es el nivel en que un sistema es susceptible, o no es capaz de soportar, los efectos adversos del cambio climático. Depende de la exposición a la variación del clima, la sensibilidad del sistema y su capacidad de adaptación."],
+ [/\bresiliencia\b/,"Según la LGCC, la resiliencia es la capacidad de los sistemas naturales o sociales para recuperarse o soportar los efectos derivados del cambio climático."],
+ [/riesgo climatico|riesgo por cambio climatico|riesgo ante el cambio climatico/,"El riesgo climático, en el enfoque del IPCC, es el potencial de consecuencias adversas que resulta de la interacción entre el peligro climático, la exposición y la vulnerabilidad."],
+ [/\bexposicion\b/,"La exposición es la presencia de personas, ecosistemas, infraestructura o bienes en lugares que podrían verse afectados por un peligro climático."],
+ [/capacidad (de )?adaptativa|capacidad de adaptacion/,"La capacidad adaptativa es la habilidad de un sistema, institución o persona para ajustarse ante el cambio climático, aprovechar oportunidades o responder a sus consecuencias."],
+ [/cambio climatico/,"Según la LGCC, el cambio climático es la variación del clima atribuida directa o indirectamente a la actividad humana, que altera la composición de la atmósfera global y se suma a la variabilidad natural del clima."],
+ [/efecto invernadero|\bgei\b/,"Los gases de efecto invernadero, como el dióxido de carbono, el metano y el óxido nitroso, absorben y reemiten radiación infrarroja; su aumento por actividades humanas es la principal causa del calentamiento global."],
+ [/\bipcc\b|panel intergubernamental/,"El IPCC es el Grupo Intergubernamental de Expertos sobre el Cambio Climático, de la ONU. Evalúa la ciencia del cambio climático y publica informes periódicos de referencia mundial."],
+ [/acuerdo de paris/,"El Acuerdo de París, de 2015, busca mantener el aumento de la temperatura global muy por debajo de 2 °C y hacer esfuerzos para limitarlo a 1.5 °C, además de fortalecer la adaptación."],
+ [/\bndc\b|contribucion determinada/,"La NDC es la Contribución Determinada a nivel Nacional: los compromisos de mitigación y adaptación que cada país presenta bajo el Acuerdo de París."],
+ [/\bencc\b|estrategia nacional de cambio climatico/,"La ENCC es la Estrategia Nacional de Cambio Climático, instrumento rector de la política nacional en la materia a mediano y largo plazo, previsto en la LGCC."],
+ [/\bpecc\b|programa especial de cambio climatico/,"El PECC es el Programa Especial de Cambio Climático, que establece los objetivos, estrategias y acciones de la administración pública federal en la materia, previsto en la LGCC."],
+ [/\banvcc\b|atlas nacional de vulnerabilidad/,"El ANVCC es el Atlas Nacional de Vulnerabilidad al Cambio Climático, una herramienta del INECC para identificar la vulnerabilidad de los municipios ante distintos impactos climáticos."],
+ [/\bimpacto ambiental\b/,"El impacto ambiental es la modificación del ambiente ocasionada por la acción del hombre o de la naturaleza, según la LGEEPA. Las obras que pueden causarlo se someten a evaluación mediante una MIA."],
+ [/ordenamiento ecologico/,"El ordenamiento ecológico es el instrumento de la LGEEPA que regula el uso del suelo y las actividades productivas para proteger el ambiente y aprovechar sustentablemente los recursos naturales."],
+ [/servicios ecosistemicos|servicios ambientales/,"Los servicios ecosistémicos o ambientales son los beneficios que la naturaleza brinda a las personas, como agua, regulación del clima, polinización o protección contra inundaciones."],
+ [/enfoque de cuenca|\bcuenca\b/,"Una cuenca es el territorio donde el agua escurre hacia un mismo cauce o cuerpo de agua. El enfoque de cuenca planea la gestión del agua y del territorio considerando toda esa unidad."]
+];
+const RX_DUDA=/(que es|que son|que significa|que quiere decir|define|definicion|explica|explicame|a que se refiere|que hace|para que sirve|quien es|que dice|que onda con|hablame de|cuentame de|me dices que es)/;
+function deSaber(tx){
+  const limpio=tx.replace(/[?¿!¡.,]/g," ").replace(/\s+/g," ").trim();
+  const corto=limpio.split(" ").length<=4; // solo la palabra: "vulnerabilidad", "la LGCC"
+  if(!RX_DUDA.test(limpio)&&!(corto&&!/\b(tengo|tenemos|hay|anota|agenda|pendiente)/.test(limpio)))return null;
+  if(/\b(que tengo|tengo|que hay)\b/.test(limpio))return null; // eso es una consulta de la agenda
+  for(const [rx,r] of SABER)if(rx.test(limpio))return r;
+  return null;
+}
+/* ---------- ¿La pregunta es sobre la agenda? ---------- */
+function deAgenda(tx){
+  if(/(pendient|tengo|tenemos|agenda|hoy|manana|semana|mes\b|dia\b|vencid|atrasad|retras|se me paso|urgent|rojo|amarill|verde|prioridad|direcci|coordinaci|titular|jefe|jefa|lista|que hay|resumen|como voy|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema|administrativ|fuera|todas|reunion|junta|entrega|oficio|minuta|cita|calendario|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d)/.test(tx))return true;
+  return dirs.some(d=>d.jefe&&sinAcento(d.jefe).replace(/[^a-z0-9ñ\s]/g," ").split(/\s+/).some(w=>w.length>=4&&tx.includes(w)));
+}
 /* ---------- Plática ---------- */
-const RX_SALUDO=/^\s*[¡¿]?\s*(hola+|holi|buen[oa]s?\s+(d[ií]as|tardes|noches)|buen\s+d[ií]a|buenas|qu[eé]\s+tal|oye|hey)\b[\s,.!¡]*((celia|asistente)\b[\s,.!]*)?/i;
+const RX_SALUDO=/^\s*[¡¿]?\s*(hola+|holi|buen[oa]s?\s+(d[ií]as|tardes|noches)|buen\s+d[ií]a|buenas|qu[eé]\s+tal|oye|hey)\b[\s,.!¡]*((celia|asistente|lexi|lexy|lexie|lexis|leksi|lecsi)\b[\s,.!]*)?/i;
 let ofrecido=null; // "hoy": se ofreció decir lo urgente
 const unaDe=a=>a[Math.floor(Math.random()*a.length)];
 function saludoHora(){const h=new Date().getHours();return h<12?"Buenos días":h<19?"Buenas tardes":"Buenas noches"}
@@ -1281,7 +1339,7 @@ function resumenCorto(){const act=tasks.filter(t=>!t.hecho),r=act.filter(t=>colo
   if(a)return`Nada en rojo hoy; ${a===1?"hay uno":"hay "+a} en amarillo para los próximos días.`;
   return"Nada urgente hoy; todo va en verde.";}
 function platica(tx){
-  const t=tx.replace(/[!.,?¿¡]+/g," ").replace(/\s+/g," ").trim().replace(/\s*\b(celia|asistente)$/,"").trim();
+  const t=tx.replace(/[!.,?¿¡]+/g," ").replace(/\s+/g," ").trim().replace(/\s*\b(celia|asistente|lexi|lexy|lexie|lexis|leksi|lecsi)$/,"").trim();
   const resp=(texto,voz)=>({texto,voz:voz||texto});
   if(esOrden(t))return null; // "anota…", "tengo que…" siempre es para la agenda
   // respuesta a una oferta
@@ -1306,11 +1364,14 @@ function platica(tx){
   if(/^(hoy )?(me siento |estoy |ando |me siento muy |estoy muy |ando muy |me siento un poco |estoy un poco )?(mal|triste|desanimada|bajoneada|no muy bien|no tan bien|fatal|de malas|enojada|molesta|preocupada|nerviosa|sola)\b/.test(t)){ofrecido="hoy";
     return resp("Siento que el día venga así, Celia. Tómate un respiro si lo necesitas. Si te ayuda, te digo solo lo más importante de hoy para que no cargues con todo. ¿Quieres?")}
   // quién eres / qué haces
-  if(/(quien eres|como te llamas|que eres|tienes nombre|cual es tu nombre)/.test(t))
-    return resp("Soy el asistente de tu agenda, Celia. Te ayudo a anotar pendientes, te digo qué tienes cada día y te aviso qué está en rojo.");
+  if(/(como te llamas|tienes nombre|cual es tu nombre|como te dicen|tu nombre)/.test(t))
+    return resp(unaDe(["Me llamo Lexi, Celia. Soy tu asistente de agenda.","Soy Lexi, tu asistente de agenda. Mucho gusto, Celia."]));
+  if(/(quien eres|que eres)/.test(t))
+    return resp("Soy Lexi, tu asistente de agenda, Celia. Te ayudo a anotar pendientes, te digo qué tienes cada día, te aviso qué está en rojo y te explico conceptos del área.");
+  if(/^(eres|tu eres|te llamas) (lexi|lexy|lexie|lexis|leksi|lecsi)$|^(lexi|lexy|lexie|lexis|leksi|lecsi) eres tu$/.test(t))return resp("Sí, soy Lexi. ¿En qué te ayudo, Celia?");
   if(/(que puedes hacer|que sabes hacer|en que me ayudas|como te uso|^ayuda$|^ayudame$|instrucciones)/.test(t))
-    return resp("Puedo ayudarte con varias cosas:\n• Anotar: “anota reunión con la Dirección de Riesgos el jueves a las 10”.\n• Consultar: “¿qué tengo hoy?”, “¿qué tengo mañana?”, “¿qué está vencido?”.\n• Por dirección: “¿qué tengo con Cuenca?”.\n• Borrar lo último: “borra el último”.\nY también podemos platicar un poco.",
-      "Puedo anotar pendientes, decirte qué tienes hoy, mañana o en la semana, qué está vencido, y qué tienes con cada dirección. Y también podemos platicar un poco.");
+    return resp("Puedo ayudarte con varias cosas:\n• Anotar: “anota reunión con la Dirección de Riesgos el jueves a las 10”.\n• Consultar: “¿qué tengo hoy?”, “¿qué tengo mañana?”, “¿qué está vencido?”.\n• Por dirección: “¿qué tengo con Cuenca?”.\n• Borrar lo último: “borra el último”.\n• Conceptos y siglas del área: “¿qué es vulnerabilidad?”, “¿qué es una MIA?”.\nY también podemos platicar un poco.",
+      "Puedo anotar pendientes, decirte qué tienes hoy, mañana o en la semana, qué está vencido, y qué tienes con cada dirección. También te explico conceptos y siglas del área, y podemos platicar un poco.");
   // gracias, cortesías
   if(/^(gracias|muchas gracias|mil gracias|te lo agradezco|gracias por todo|ok gracias|va gracias)$/.test(t))return resp(unaDe(["Con gusto, Celia.","De nada; aquí estoy.","Para eso estoy. Con gusto."]));
   if(/^(ok|okay|va|vale|perfecto|listo|sale|entendido|de acuerdo|esta bien)$/.test(t))return resp(unaDe(["Perfecto.","Va.","Listo, aquí sigo."]));
@@ -1356,7 +1417,7 @@ function ubicarPanel(){
 }
 let saludado=false;
 function abrirPanel(){fp.hidden=false;fab.setAttribute("aria-expanded","true");ubicarPanel();requestAnimationFrame(()=>fp.classList.add("in"));
-  if(!saludado){saludado=true;const r=responder("que tengo hoy");botDice(`Hola, Celia.\n\n${r.texto}`,null)}
+  if(!saludado){saludado=true;const r=responder("que tengo hoy");botDice(`Hola, Celia. Soy Lexi.\n\n${r.texto}`,null)}
   setTimeout(()=>$("#q-in").focus({preventScroll:true}),60)}
 function cerrarPanel(){fp.classList.remove("in");fab.setAttribute("aria-expanded","false");setTimeout(()=>{fp.hidden=true},180)}
 function togglePanel(){fp.hidden?abrirPanel():cerrarPanel()}
@@ -1395,9 +1456,9 @@ function iniciarRec(continuo){
   if(rec)try{rec.abort()}catch(e){}
   rec=new SR();rec.lang="es-MX";rec.interimResults=true;rec.continuous=!!continuo;rec.maxAlternatives=1;
   let final="";
-  rec.onstart=()=>{escuchando=true;fab.classList.add("listening");$("#mic").classList.add("on");setEstado(continuo?"Manos libres: di “Oye agenda…”":"Te escucho…")};
+  rec.onstart=()=>{escuchando=true;fab.classList.add("listening");$("#mic").classList.add("on");setEstado(continuo?"Manos libres: di “Oye Lexi…”":"Te escucho…")};
   rec.onresult=e=>{let inter="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i];if(r.isFinal){const txt=r[0].transcript.trim();
-        if(continuo){const t=sinAcento(txt);const m=t.match(/\b(oye|hey|ey)\s*(agenda|asistente)?\b/);if(m){const idx=t.indexOf(m[0])+m[0].length;const resto=txt.slice(idx).replace(/^[\s,]+/,"");if(resto)procesar(resto);else{decir("Dime.");}}}
+        if(continuo){const t=sinAcento(txt);const m=t.match(/\b(?:(?:oye|hey|ey)\s*(?:agenda|asistente|lexi|lexy|lexie|lexis|leksi|lecsi)?|lexi|lexy|lexie|lexis|leksi|lecsi)\b/);if(m){const idx=t.indexOf(m[0])+m[0].length;const resto=txt.slice(idx).replace(/^[\s,]+/,"");if(resto)procesar(resto);else{decir("Dime.");}}}
         else final+=txt+" "}else inter+=r[0].transcript}
     $("#q-in").value=(final+inter).trim()};
   rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){modoManos=false;cfg.manos=false;guardarCfg();$("#cfg-manos").checked=false;
@@ -1422,7 +1483,7 @@ $("#fp-voz").onclick=()=>{ponerVoz(!cfg.hablar);setEstado(cfg.hablar?"Voz activa
 ponerVoz(cfg.hablar);
 $("#cfg-voz").onchange=e=>{cfg.voz=e.target.value;guardarCfg();decir("Hola, Celia. Así sueno ahora.")};
 $("#cfg-vel").oninput=e=>{cfg.vel=+e.target.value;guardarCfg()};
-$("#cfg-probar").onclick=()=>decir("Hola, Celia. Soy tu asistente de agenda. Dime, por ejemplo: anota reunión con la Dirección de Riesgos el jueves a las diez.");
+$("#cfg-probar").onclick=()=>decir("Hola, Celia. Soy Lexi, tu asistente de agenda. Dime, por ejemplo: anota reunión con la Dirección de Riesgos el jueves a las diez.");
 $("#cfg-manos").onchange=e=>{modoManos=e.target.checked;if(modoManos)iniciarRec(true);else{try{rec&&rec.abort()}catch(x){}}};
 if(!SR){$("#mic").disabled=true;$("#mic").title="Tu navegador no permite dictar por voz";$("#cfg-manos").disabled=true}
 
