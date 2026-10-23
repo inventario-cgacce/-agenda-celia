@@ -1292,7 +1292,8 @@ function lugarVoz(l){if(!l)return"";if(/^En línea/.test(l))return"en línea";co
   return "en "+art+(art?l.charAt(0).toLowerCase()+l.slice(1):l)}
 function etiquetaVoz(t){const q=conQuien(t),tit=t.titulo===t.titulo.toUpperCase()&&/[A-ZÁÉÍÓÚÑ]{3}/.test(t.titulo)?suavizar(t.titulo):t.titulo;
   return tit+(q&&!sinAcento(tit).includes(sinAcento(q).split(/\s+/)[0])?" con "+q:"")}
-function hablarLista(l){return l.slice(0,3).map(t=>`${etiquetaVoz(t)}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}`).join(". ")+(l.length>3?`. Y ${l.length-3} más en la pantalla.`:".")}
+function lugarDe(t){const m=(t.notas||"").match(/Lugar:\s*([^\n·]+)/);return m?m[1].trim():(esFuera(t.direccion)&&t.direccion!=="Fuera"?t.direccion.slice(FUERA_PRE.length):"")}
+function hablarLista(l,sinFecha){return l.slice(0,3).map(t=>{const lg=lugarDe(t);return `${etiquetaVoz(t)}${lg?", "+lugarVoz(lg):""}${sinFecha?"":", "+fechaHablada(t.fecha)}${t.hora?(sinFecha?", ":" ")+horaHablada(t.hora):""}`}).join(". ")+(l.length>3?`. Y ${l.length-3} más en la pantalla.`:".")}
 function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hecho);
   if(!act.length)return{texto:"No tienes pendientes activos. Dime “anota…” y lo agrego.",voz:"No tienes pendientes. Cuando quieras, dime anota, y lo agrego."};
   const habla=/direccion|coordinacion|jefe|titular|administrativ|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema/.test(tx)||dirs.some(x=>x.jefe&&sinAcento(x.jefe).split(/\s+/).some(w=>w.length>=4&&tx.includes(w)));
@@ -1318,6 +1319,8 @@ function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hech
   else if(/\bhoy\b/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return(n!==null&&n<=0)||t.prioridad==="alta"});enc="Para hoy";cuandoV="para hoy";vacio=KW?`Hoy no tienes ${que}.`:"Hoy no tienes nada pendiente."}
   else if(fq&&!/semana/.test(tx)){sel=base.filter(t=>t.fecha===fq);const fh=fechaLarga(fq);enc=cap(fh);cuandoV=fh;vacio=`${cap(fh)}: no tienes ${KW?que:"nada"}.`}
   else if(/semana/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return(n!==null&&n<=7)||t.prioridad==="alta"});enc="Esta semana";cuandoV="esta semana";vacio=`Esta semana no tienes ${KW?que:"nada"}.`}
+  else if(/amarill/.test(tx)){sel=base.filter(t=>color(t)==="a");enc="En amarillo";cuandoV="en amarillo";vacio="No tienes nada en amarillo."}
+  else if(/\bverde/.test(tx)){sel=base.filter(t=>color(t)==="g");enc="En verde";cuandoV="en verde";vacio="No tienes nada en verde."}
   else if(/urgente|rojo|prioridad/.test(tx)){sel=base.filter(t=>color(t)==="r");enc="En rojo";cuandoV="en rojo";vacio=KW?`No tienes ${que} en rojo.`:"No tienes nada en rojo."}
   else{sel=base;enc=KW?cap(que):"Tus pendientes activos";cuandoV="en total";vacio=KW?`No tienes ${que} en la agenda.`:"No tienes pendientes activos."}
   sel.sort(orden);const r=sel.filter(t=>color(t)==="r").length;
@@ -1330,7 +1333,7 @@ function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hech
     voz=fin(vacio.replace(/\.$/,"")+(d?" con esa dirección":""))+(nx?` Lo siguiente es ${etiquetaVoz(nx)}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`:" Vas bien.");
   }else{
     texto=`${enc}${quien}: ${sel.length}\n\n${lineas(sel)}`;if(r)texto+=`\n\nEmpieza por ${r===1?"el que está":"los "+r+" que están"} en rojo.`;
-    voz=`Tienes ${sel.length===1?(KW?"una":"un pendiente"):sel.length+(KW?"":" pendientes")}${KW?" "+(sel.length===1?KW[1].replace(/(es|s)$/,""):que):""} ${cuandoV}${d?" con "+d.nombre.replace(/^Dirección de /,"la dirección de "):""}. ${hablarLista(sel)}`+(r&&enc!=="En rojo"?` ${r===1?"Uno está":r+" están"} en rojo; empieza por ahí.`:"");
+    voz=`Tienes ${sel.length===1?(KW?"una":"un pendiente"):sel.length+(KW?"":" pendientes")}${KW?" "+(sel.length===1?KW[1].replace(/(es|s)$/,""):que):""} ${cuandoV}${d?" con "+d.nombre.replace(/^Dirección de /,"la dirección de "):""}. ${hablarLista(sel,sel.every(t=>t.fecha&&t.fecha===sel[0].fecha)&&!/total|semana|rojo|amarillo|verde|vencid/.test(cuandoV))}`+(r&&enc!=="En rojo"?` ${r===1?"Uno está":r+" están"} en rojo; empieza por ahí.`:"");
   }
   return{texto,voz:unaDe(["","","A ver. ","Mira. ","Déjame ver. "])+voz};
 }
@@ -1446,7 +1449,7 @@ function deSaber(tx){
 }
 /* ---------- ¿La pregunta es sobre la agenda? ---------- */
 function deAgenda(tx){
-  if(/(pendient|tengo|tenemos|agenda|hoy|manana|semana|mes\b|dia\b|vencid|atrasad|retras|se me paso|urgent|rojo|amarill|verde|prioridad|direcci|coordinaci|titular|jefe|jefa|lista|que hay|resumen|como voy|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema|administrativ|fuera|todas|reunion|junta|entrega|oficio|minuta|cita|calendario|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d)/.test(tx))return true;
+  if(/(pendient|tengo|tenemos|agenda|hoy|manana|semana|mes\b|dia\b|vencid|atrasad|retras|se me paso|urgent|rojo|amarill|verde|prioridad|direcci|coordinaci|titular|jefe|jefa|lista|que hay|resumen|sigue|siguiente|proxim|dime todo|todo lo que|como voy|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema|administrativ|fuera|todas|reunion|junta|entrega|oficio|minuta|cita|calendario|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d)/.test(tx))return true;
   return dirs.some(d=>d.jefe&&sinAcento(d.jefe).replace(/[^a-z0-9ñ\s]/g," ").split(/\s+/).some(w=>w.length>=4&&tx.includes(w)));
 }
 /* ---------- Plática ---------- */
