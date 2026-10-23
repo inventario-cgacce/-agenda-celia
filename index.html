@@ -996,7 +996,7 @@ $("#f").addEventListener("submit",e=>{e.preventDefault();
   const files=MODO==="nube"?[...$("#f-docs").files]:[];
   let t;if(editTask){Object.assign(editTask,v);t=editTask}else t=agregar(v);
   cerrar();persistir();if(corrF.length)$("#quick-status").textContent="Guardado. Corregí la ortografía: "+corrF.join(", ")+".";if(files.length)subirDelForm(files,t.id,t.titulo)});
-function agregar(t){delete t.correcciones;const n={id:uid(),titulo:t.titulo,fecha:t.fecha||"",hora:t.hora||"",con:t.con||"",direccion:t.direccion||"",notas:t.notas||"",prioridad:t.prioridad==="alta"?"alta":"normal",hecho:false,creado:new Date().toISOString(),autor:yo()};tasks.push(n);return n}
+function agregar(t){delete t.correcciones;delete t.lugar;const n={id:uid(),titulo:t.titulo,fecha:t.fecha||"",hora:t.hora||"",con:t.con||"",direccion:t.direccion||"",notas:t.notas||"",prioridad:t.prioridad==="alta"?"alta":"normal",hecho:false,creado:new Date().toISOString(),autor:yo()};tasks.push(n);return n}
 
 /* ---------- Exportar a Excel (.xlsx real, sin internet) ---------- */
 const XL=(()=>{
@@ -1228,7 +1228,7 @@ function clavePh(w){let x=sinAcento(w).toLowerCase().replace(/ch/g,"ç").replace
 function lev(a,b){if(Math.abs(a.length-b.length)>1)return 9;const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);
   for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
 function vocab(){if(VOCAB)return VOCAB;const set=new Set();
-  const add=w=>{if(w&&w.length>=4&&!/\d/.test(w)){set.add(w.toLowerCase());if(!/s$/.test(w))set.add(w.toLowerCase()+(/[aeiouáéíóú]$/.test(w)?"s":"es"))}};
+  const add=w=>{if(w&&w.length>=4&&!/\d/.test(w)){set.add(w.toLowerCase());if(!/s$/.test(w)){const l=w.toLowerCase();set.add(/[aeiouáéíóú]$/.test(l)?l+"s":l.replace(/([áéíóú])([a-zñ])$/,(m,v,c)=>({"á":"a","é":"e","í":"i","ó":"o","ú":"u"})[v]+c)+"es")}}};
   VOCAB_BASE.forEach(add);dirs.forEach(d=>d.nombre.split(/\s+/).forEach(add));
   VOCAB=[...set].map(w=>({w,s:sinAcento(w),k:clavePh(w)}));return VOCAB}
 function corregirPalabra(w,cambios){
@@ -1257,10 +1257,24 @@ function suavizar(s){ // si viene TODO EN MAYÚSCULAS, lo deja como oración y r
 function acentos(r){const A={reunion:"reunión",reuniones:"reuniones",coordinacion:"coordinación",direccion:"dirección",comision:"comisión",revision:"revisión",opinion:"opinión",tecnica:"técnica",tecnico:"técnico",publica:"pública",informacion:"información",presentacion:"presentación",sesion:"sesión",evaluacion:"evaluación",adaptacion:"adaptación",mitigacion:"mitigación",ecologia:"ecología",economia:"economía",climatico:"climático",climatica:"climática",manana:"mañana",dia:"día",envio:"envío",capacitacion:"capacitación"};
   return r.replace(/\b([A-Za-z]+)\b/g,w=>{const k=w.toLowerCase();if(!A[k])return w;const v=A[k];return w[0]===w[0].toUpperCase()?v.charAt(0).toUpperCase()+v.slice(1):v})}
 const nombrePropio=p=>p&&p===p.toUpperCase()&&/[A-ZÁÉÍÓÚÑ]{2}/.test(p)?p.split(/\s+/).map(w=>SIGLAS.includes(w)?w:cap(w.toLowerCase())).join(" "):(p||"").split(/\s+/).map(w=>SIGLAS.includes(w.toUpperCase())?w.toUpperCase():w).join(" ");
+/* Lugar: "en la sala de juntas de la coordinación", "en el auditorio", "por Zoom"… */
+const RX_LUGAR=/\b(?:en|por)\s+(?:la\s+|el\s+|los\s+|las\s+|una\s+|un\s+)?((?:sala de juntas|sala de usos m[uú]ltiples|sala|sal[oó]n|auditorio|oficinas?|cub[ií]culo|despacho|edificio|piso|planta baja|recepci[oó]n|comedor|biblioteca|aula|explanada|instalaciones|sede|zoom|teams|google meet|meet|videollamada|l[ií]nea)\b[^,.;]*?)(?=\s+(?:el|este|esta|para|a\s+las?|al?\s+mediod[ií]a|hoy|ma[ñn]ana|pasado|lunes|martes|mi[ée]rcoles|jueves|viernes|s[áa]bado|domingo|urgente|con|y\s+lleva|llevar)\b|[,.;]|$)/i;
+function leerLugar(texto){const m=texto.match(RX_LUGAR);if(!m)return{lugar:"",frase:""};
+  let l=m[1].trim();const t=sinAcento(l.toLowerCase());
+  if(/^(zoom|teams|google meet|meet|videollamada|linea)/.test(t))l=/linea|videollamada/.test(t)?"En línea":"En línea ("+({zoom:"Zoom",teams:"Teams",meet:"Meet","google meet":"Google Meet"})[t.split(" ")[0]==="google"?"google meet":t.split(" ")[0]]+")";
+  else{l=corregirTexto(suavizar(l));l=l.charAt(0).toUpperCase()+l.slice(1);l=l.replace(/\b(de la|del|de)\s+(coordinación|dirección|subdirección|secretaría|presidencia)\b/gi,(x,a,b)=>a+" "+b.charAt(0).toUpperCase()+b.slice(1)).replace(/\b(Dirección|Subdirección|Coordinación) de (?:la |los |las )?([a-záéíóúñ])/g,(x,a,c)=>x.slice(0,-1)+c.toUpperCase())}
+  return{lugar:l,frase:m[0]}}
 function interpretar(texto){const tx=numeros(sinAcento(texto)),d=buscarDir(texto),con=nombrePropio(leerPersona(texto));
-  const fuenteTitulo=texto.split(/\s*[·•]\s*|\n+/)[0];
-  const cambios=[];const titulo=corregirTexto(suavizar(limpiarTitulo(numerosTexto(fuenteTitulo))),cambios);
-  return{correcciones:cambios,titulo,fecha:leerFecha(tx),hora:leerHora(tx),direccion:dirDe(texto,tx,d),con:d&&d.jefe&&sinAcento(con)===sinAcento(d.jefe)?"":con,prioridad:/urgente|importante|prioritari/.test(tx)?"alta":"normal",notas:""}}
+  let fuenteTitulo=texto.split(/\s*[·•]\s*|\n+/)[0].replace(/\bfuera(\s+de\s+la\s+oficina)?\s+(en|a)\b/i,"en");
+  const {lugar,frase}=leerLugar(fuenteTitulo);if(frase)fuenteTitulo=fuenteTitulo.replace(frase," ");
+  const cambios=[];let titulo=corregirTexto(suavizar(limpiarTitulo(numerosTexto(fuenteTitulo))),cambios);
+  const conFinal=d&&d.jefe&&sinAcento(con)===sinAcento(d.jefe)?"":con;
+  const quien=[conFinal,d&&d.jefe?d.jefe:""].filter(Boolean);
+  quien.forEach(q=>{const sq=sinAcento(q).split(/\s+/)[0];if(!sq)return;
+    const rx=new RegExp("\\s*\\bcon\\s+(?:el\\s+|la\\s+|los\\s+|las\\s+)?(?:(?:lic|licenciad[oa]|doctor[a]?|dr[a]?|ing|mtr[oa]|maestr[oa])\\.?\\s+)?"+sq.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"[a-zñ]*(?:\\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)?","i");
+    const sin=sinAcento(titulo);const m=sin.match(rx);if(m&&m.index>0)titulo=(titulo.slice(0,m.index)+titulo.slice(m.index+m[0].length)).replace(/\s{2,}/g," ").trim()});
+  if(!titulo)titulo="Pendiente";
+  return{correcciones:cambios,titulo,lugar,fecha:leerFecha(tx),hora:leerHora(tx),direccion:dirDe(texto,tx,d),con:conFinal,prioridad:/urgente|importante|prioritari/.test(tx)?"alta":"normal",notas:lugar?"Lugar: "+lugar:""}}
 function numerosTexto(t){return t.replace(/\b(a las?) (una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b/gi,(m,a,n)=>a+" "+NUM[sinAcento(n.toLowerCase())])}
 
 /* ---------- Respuestas ---------- */
@@ -1316,8 +1330,8 @@ function fechaLarga(f){const d=diasHasta(f),x=parseISO(f),base=`${DIAS[x.getDay(
   return d===0?"hoy, "+base:d===1?"mañana, "+base:d===2?"pasado mañana, "+base:"el "+base}
 const alFecha=f=>{const s=fechaHablada(f);return /^el /.test(s)?"al "+s.slice(3):s};
 function fraseColor(t){const c=color(t);return c==="r"?"Lo puse en rojo.":c==="a"?"Queda en amarillo.":"Queda en verde, vas con tiempo."}
-function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(normTexto(texto));const corr=t.correcciones||[];agregar(t);persistir();
-  const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`. Corregí: ${corr.join(", ")}`:"");
+function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(normTexto(texto));const corr=t.correcciones||[],lug=t.lugar;agregar(t);persistir();
+  const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${lug?" · "+lug:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`. Corregí: ${corr.join(", ")}`:"");
   const voz=`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`;
   if(dest==="quick"){$("#quick-status").textContent=msg+". Si algo quedó mal, haz clic en el pendiente para corregirlo.";decir(voz,true)}
   else botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",voz);
@@ -1354,14 +1368,22 @@ function intentarMover(v,tx){
   if(empates.length>1){const l=empates.slice(0,4).map(t=>"• "+t.titulo+(t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:"")+" — "+cuando(t)).join("\n");
     botDice("Encontré varios parecidos. ¿Cuál quieres mover? Dímelo con un detalle más, por ejemplo con quién es.\n\n"+l,"Encontré varios parecidos. ¿Cuál quieres mover? Dime con quién es.");return true}
   const antes=cuando(best);if(fecha)best.fecha=fecha;if(hora)best.hora=hora;persistir();
-  const msg=`Listo, moví “${best.titulo}” ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.\nAntes estaba: ${antes}.`+(verbo?"":"\n\nSi querías anotar uno nuevo, dime “anota…”.");
+  const etq=best.titulo+(best.con&&!sinAcento(best.titulo).includes(sinAcento(best.con))?" con "+best.con:"");const msg=`Listo, moví “${etq}” ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.\nAntes estaba: ${antes}.`+(verbo?"":"\n\nSi querías anotar uno nuevo, dime “anota…”.");
   botDice(msg,`Listo, lo moví ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.`);return true;
 }
 function procesarResto(v,yaDicho){const tx=sinAcento(v).replace(/[¿¡]/g,"");
   if(intentarMover(v,tx))return;
   if(/\b(borra|elimina|quita)\b.*\b(ultimo|ultima)\b/.test(tx)){const t=tasks[tasks.length-1];if(!t)return botDice("No hay nada que borrar.","No hay nada que borrar.");tasks.pop();persistir();return botDice(`Borré: ${t.titulo}`,`Listo, borré ${t.titulo}.`)}
   const preguntaTengo=/\?/.test(v)&&/^((oye|hey) )?((lexi|lexy|lexie) )?(tengo|hay)\b/.test(tx.replace(/\?/g,"").trim());
-  if((esOrden(tx)&&!preguntaTengo)||(!esPregunta(tx)&&!preguntaTengo&&(RX_DIA.test(tx)||/\b\d{1,2}\s+de\s+[a-z]+|\ba las?\s/.test(numeros(tx))))){const t=interpretar(v);const corr=t.correcciones||[];agregar(t);persistir();
+  if((esOrden(tx)&&!preguntaTengo)||(!esPregunta(tx)&&!preguntaTengo&&(RX_DIA.test(tx)||/\b\d{1,2}\s+de\s+[a-z]+|\ba las?\s/.test(numeros(tx))))){const t=interpretar(v);const corr=t.correcciones||[],lug=t.lugar;agregar(t);persistir();
+    const partes=["Listo, lo acomodé así:","• Qué: "+t.titulo,"• Cuándo: "+(t.fecha?cap(fechaLarga(t.fecha)):"Sin fecha")+(t.hora?" "+horaHablada(t.hora):"")];
+    const dondeFuera=esFuera(t.direccion)?(t.direccion==="Fuera"?"Fuera de la oficina":t.direccion.slice(FUERA_PRE.length)+" (fuera de la oficina)"):"";
+    if(lug||dondeFuera)partes.push("• Dónde: "+(lug||dondeFuera));
+    const tit=t.direccion&&!esFuera(t.direccion)?jefeDe(t.direccion):"";
+    if(t.con)partes.push("• Con: "+t.con);else if(tit&&sinAcento(v).includes(sinAcento(tit).split(" ")[0]))partes.push("• Con: "+nombrePropio(tit)+" (titular)");
+    if(t.direccion&&!esFuera(t.direccion))partes.push("• Dirección: "+t.direccion);if(t.prioridad==="alta")partes.push("• Urgente");
+    if(corr.length)partes.push("","Corregí la ortografía: "+corr.join(", ")+".");
+    return botDice(partes.join("\n")+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${t.titulo}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}${lug?", en "+lug.replace(/^En línea/,"línea"):""}. ${fraseColor(t)}`);
     const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`\n\nCorregí la ortografía: ${corr.join(", ")}.`:"");
     return botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`)}
   const sb=deSaber(tx);if(sb)return botDice(sb,sb);
