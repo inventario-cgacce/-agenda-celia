@@ -1284,7 +1284,15 @@ function horaHablada(h){if(!h)return"";let[H,M]=h.split(":").map(Number);const p
   if(H===12&&M===0)return"al mediodía";const min=M===0?"":M===30?" y media":M===15?" y cuarto":M===1?" y un minuto":` y ${M}`;return `a la${h12===1?"":"s"} ${h12}${min} ${parte}`}
 function lineas(l){if(!l.length)return"Nada.";const ico={r:"🔴",a:"🟡",g:"🟢",x:"✔️"};
   return l.sort(orden).map(t=>`${ico[color(t)]} ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?"\n    "+t.direccion+(jefeDe(t.direccion)?" ("+jefeDe(t.direccion)+")":""):""}\n    ${cuando(t)}`).join("\n")}
-function hablarLista(l){return l.slice(0,3).map(t=>`${t.titulo}${t.con?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}`).join(". ")+(l.length>3?`. Y ${l.length-3} más en la pantalla.`:".")}
+/* Para la voz: "Reunión con May", "Junta con Aram" (titular de la dirección) */
+function conQuien(t){const c=(t.con||"").trim();if(c)return nombrePropio(c);
+  if(t.direccion&&!esFuera(t.direccion)&&t.direccion!==TODAS){const j=jefeDe(t.direccion);if(j)return nombrePropio(j)}return""}
+function lugarVoz(l){if(!l)return"";if(/^En línea/.test(l))return"en línea";const w=sinAcento(l.split(/\s+/)[0].toLowerCase());
+  const art=/^(sala|oficina|biblioteca|explanada|recepcion|planta|sede)$/.test(w)?"la ":/^(auditorio|comedor|salon|despacho|edificio|piso|cubiculo|aula)$/.test(w)?"el ":"";
+  return "en "+art+(art?l.charAt(0).toLowerCase()+l.slice(1):l)}
+function etiquetaVoz(t){const q=conQuien(t),tit=t.titulo===t.titulo.toUpperCase()&&/[A-ZÁÉÍÓÚÑ]{3}/.test(t.titulo)?suavizar(t.titulo):t.titulo;
+  return tit+(q&&!sinAcento(tit).includes(sinAcento(q).split(/\s+/)[0])?" con "+q:"")}
+function hablarLista(l){return l.slice(0,3).map(t=>`${etiquetaVoz(t)}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}`).join(". ")+(l.length>3?`. Y ${l.length-3} más en la pantalla.`:".")}
 function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hecho);
   if(!act.length)return{texto:"No tienes pendientes activos. Dime “anota…” y lo agrego.",voz:"No tienes pendientes. Cuando quieras, dime anota, y lo agrego."};
   const habla=/direccion|coordinacion|jefe|titular|administrativ|riesgo|cuenca|hidrolog|economia|conservacion|ecosistema/.test(tx)||dirs.some(x=>x.jefe&&sinAcento(x.jefe).split(/\s+/).some(w=>w.length>=4&&tx.includes(w)));
@@ -1301,7 +1309,7 @@ function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hech
     if(!nx)return{texto:KW?`No tienes ${que} próximas en la agenda.`:"No tienes pendientes con fecha próxima.",voz:KW?`No tienes ${que} próximas.`:"No tienes pendientes con fecha próxima."};
     const sing=acentos(KW?KW[1].replace(/(es|s)$/,""):"");const art=KW?(/^(reuni|junta|entre|cita|llama|comis|firma)/.test(kwRaiz)?"Tu próxima "+sing:"Tu próximo "+sing):"Lo siguiente que tienes";
     const t1=`${art}: ${nx.titulo}${nx.con&&!sinAcento(nx.titulo).includes(sinAcento(nx.con))?" · con "+nx.con:""}\n    ${cuando(nx)}`;
-    return{texto:t1,voz:`${art.replace(/:$/,"")} es ${nx.titulo}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`};
+    return{texto:t1,voz:`${art.replace(/:$/,"")} es ${etiquetaVoz(nx)}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`};
   }
   let sel,enc,cuandoV,vacio;const fq=leerFecha(tx);
   if(/vencid|se me paso|atrasad|retras|pendiente.*pasad/.test(tx)){sel=base.filter(t=>{const n=diasHasta(t.fecha);return n!==null&&n<0});enc="Vencidos";cuandoV="vencidos";vacio=KW?`No tienes ${que} vencidas.`:"No tienes nada vencido. ¡Vas al día!"}
@@ -1319,7 +1327,7 @@ function responder(q){const tx=numeros(sinAcento(q)),act=tasks.filter(t=>!t.hech
     const nx=siguiente(base.filter(t=>!sel.includes(t)));
     const fin=x=>/[.!?]$/.test(x)?x:x+".";
     texto=fin(vacio.replace(/\.$/,"")+(d?" con esa dirección":""))+(nx?`\n\nLo siguiente: ${nx.titulo}\n    ${cuando(nx)}`:"");
-    voz=fin(vacio.replace(/\.$/,"")+(d?" con esa dirección":""))+(nx?` Lo siguiente es ${nx.titulo}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`:" Vas bien.");
+    voz=fin(vacio.replace(/\.$/,"")+(d?" con esa dirección":""))+(nx?` Lo siguiente es ${etiquetaVoz(nx)}, ${fechaHablada(nx.fecha)}${nx.hora?" "+horaHablada(nx.hora):""}.`:" Vas bien.");
   }else{
     texto=`${enc}${quien}: ${sel.length}\n\n${lineas(sel)}`;if(r)texto+=`\n\nEmpieza por ${r===1?"el que está":"los "+r+" que están"} en rojo.`;
     voz=`Tienes ${sel.length===1?(KW?"una":"un pendiente"):sel.length+(KW?"":" pendientes")}${KW?" "+(sel.length===1?KW[1].replace(/(es|s)$/,""):que):""} ${cuandoV}${d?" con "+d.nombre.replace(/^Dirección de /,"la dirección de "):""}. ${hablarLista(sel)}`+(r&&enc!=="En rojo"?` ${r===1?"Uno está":r+" están"} en rojo; empieza por ahí.`:"");
@@ -1332,7 +1340,7 @@ const alFecha=f=>{const s=fechaHablada(f);return /^el /.test(s)?"al "+s.slice(3)
 function fraseColor(t){const c=color(t);return c==="r"?"Lo puse en rojo.":c==="a"?"Queda en amarillo.":"Queda en verde, vas con tiempo."}
 function dictar(texto,dest){if(!texto.trim())return;const t=interpretar(normTexto(texto));const corr=t.correcciones||[],lug=t.lugar;agregar(t);persistir();
   const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${lug?" · "+lug:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`. Corregí: ${corr.join(", ")}`:"");
-  const voz=`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`;
+  const voz=`Listo. Anoté ${etiquetaVoz(t)}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`;
   if(dest==="quick"){$("#quick-status").textContent=msg+". Si algo quedó mal, haz clic en el pendiente para corregirlo.";decir(voz,true)}
   else botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",voz);
 }
@@ -1369,7 +1377,7 @@ function intentarMover(v,tx){
     botDice("Encontré varios parecidos. ¿Cuál quieres mover? Dímelo con un detalle más, por ejemplo con quién es.\n\n"+l,"Encontré varios parecidos. ¿Cuál quieres mover? Dime con quién es.");return true}
   const antes=cuando(best);if(fecha)best.fecha=fecha;if(hora)best.hora=hora;persistir();
   const etq=best.titulo+(best.con&&!sinAcento(best.titulo).includes(sinAcento(best.con))?" con "+best.con:"");const msg=`Listo, moví “${etq}” ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.\nAntes estaba: ${antes}.`+(verbo?"":"\n\nSi querías anotar uno nuevo, dime “anota…”.");
-  botDice(msg,`Listo, lo moví ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.`);return true;
+  botDice(msg,`Listo, moví ${etiquetaVoz(best)} ${alFecha(best.fecha)}${best.hora?" "+horaHablada(best.hora):""}.`);return true;
 }
 function procesarResto(v,yaDicho){const tx=sinAcento(v).replace(/[¿¡]/g,"");
   if(intentarMover(v,tx))return;
@@ -1383,7 +1391,7 @@ function procesarResto(v,yaDicho){const tx=sinAcento(v).replace(/[¿¡]/g,"");
     if(t.con)partes.push("• Con: "+t.con);else if(tit&&sinAcento(v).includes(sinAcento(tit).split(" ")[0]))partes.push("• Con: "+nombrePropio(tit)+" (titular)");
     if(t.direccion&&!esFuera(t.direccion))partes.push("• Dirección: "+t.direccion);if(t.prioridad==="alta")partes.push("• Urgente");
     if(corr.length)partes.push("","Corregí la ortografía: "+corr.join(", ")+".");
-    return botDice(partes.join("\n")+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${t.titulo}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}${lug?", en "+lug.replace(/^En línea/,"línea"):""}. ${fraseColor(t)}`);
+    return botDice(partes.join("\n")+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${etiquetaVoz(t)}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}${lug?", "+lugarVoz(lug):""}. ${fraseColor(t)}`);
     const msg=`Anoté: ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?" · con "+t.con:""}${t.direccion?" · "+t.direccion:""} · ${cuando(t)}${t.prioridad==="alta"?" · Urgente":""}`+(corr.length?`\n\nCorregí la ortografía: ${corr.join(", ")}.`:"");
     return botDice(msg+"\n\nSi algo quedó mal, toca el pendiente en la agenda para corregirlo.",`Listo. Anoté ${t.titulo}${t.con&&!sinAcento(t.titulo).includes(sinAcento(t.con))?", con "+t.con:""}, ${fechaHablada(t.fecha)}${t.hora?" "+horaHablada(t.hora):""}. ${fraseColor(t)}`)}
   const sb=deSaber(tx);if(sb)return botDice(sb,sb);
