@@ -1,7 +1,7 @@
 /* Agenda de Celia — permite abrir la app sin internet.
    La página se busca primero en internet (para recibir actualizaciones) y, si no hay conexión, se usa la copia guardada.
    Los datos van directo a Google: este archivo no los toca. */
-const CACHE = 'agenda-celia-v2';
+const CACHE = 'agenda-celia-v3';
 const BASE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './intro.jpg'];
 
 self.addEventListener('install', e => {
